@@ -57,15 +57,17 @@ public class ServerService extends IntentService {
                 Log.d("NEUTRAL","Server Service Class: About to start Handhskae");
 
                 //Receive Data
-                byte[] buffer = new byte[4096];
+                Integer length = is.available();
+                byte[] buffer = new byte[length];
                 is.read(buffer);
 
                 String test = new String(buffer, "UTF-8");
                 //Complete method
                 socket.close();
 
-                Log.d("NEUTRAL","Data Transfer Completed: " + test);
 
+                Log.d("NEUTRAL","Data Transfer Completed: " + test);
+                signalActivity(test);
 
             }
 

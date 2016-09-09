@@ -24,6 +24,7 @@ public class ClientService extends IntentService {
 
     private Boolean serviceEnabled=false;
     private int port;
+    private String sendData;
     private ResultReceiver clientResult;
     private WifiP2pDevice targetDevice;
     private WifiP2pInfo wifiP2pInfo;
@@ -40,6 +41,7 @@ public class ClientService extends IntentService {
 
         Log.d("NEUTRAL","Client Service Class: Intent Received");
         port = ((Integer) intent.getExtras().get("port")).intValue();
+        sendData =((String) intent.getExtras().get("sendData"));
         clientResult = (ResultReceiver) intent.getExtras().get("clientResult");
         wifiP2pInfo = (WifiP2pInfo) intent.getExtras().get("wifiInfo");
 
@@ -61,11 +63,8 @@ public class ClientService extends IntentService {
                 signalActivity("About to start handshake");
                 Log.d("NEUTRAL", "Client Service Class: About to start handshake");
 
-                byte[] buffer = new byte[4096];
-                String testString = "Hello World!";
-                buffer = testString.getBytes("UTF-8");
-
-                //Send Data
+                byte[] buffer = sendData.getBytes("UTF-8");
+               //Send Data
                 os.write(buffer,0,buffer.length);
                 os.flush();
                 /*

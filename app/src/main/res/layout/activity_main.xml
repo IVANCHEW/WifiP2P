@@ -10,85 +10,82 @@
     tools:context="com.example.ivan.wifip2pbasic.MainActivity">
 
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello World!"
+        android:id="@+id/textView1"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"/>
 
-    <GridLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+    <EditText
+        android:text="Hello World 2!"
+        android:id="@+id/editText"
+        android:layout_below="@+id/textView2"
+        android:layout_height="50dp"
+        android:layout_width="300dp"
+        />
+
+    <Spinner
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/spinner1"
+        android:layout_below="@id/editText"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Discover Peers"
+        android:id="@+id/button1"
+        android:layout_below="@+id/spinner1"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
+        android:layout_marginTop="50dp" />
 
-        >
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Connect"
+        android:id="@+id/button2"
+        android:layout_toRightOf="@id/button1"
+        android:layout_alignBottom="@id/button1"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_column="0"
-            android:layout_row="0"
-            android:text="Hello World!"
-            android:id="@+id/textView1" />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send Data"
+        android:id="@+id/button3"
+        android:layout_toRightOf="@id/button2"
+        android:layout_alignBottom="@id/button1"/>
 
-        <Spinner
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/spinner1"
-            android:layout_row="1"
-            android:layout_column="0" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Service Text"
+        android:id="@+id/textView2"
+        android:layout_below="@id/textView1"/>
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Discover Peers"
-            android:id="@+id/button1"
-            android:layout_row="3"
-            android:layout_column="0" />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Server"
+        android:id="@+id/button4"
+        android:layout_below="@id/button1"/>
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Connect"
-            android:id="@+id/button2"
-            android:layout_row="4"
-            android:layout_column="0" />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Preview"
+        android:id="@+id/button5"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"/>
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Send Data"
-            android:id="@+id/button3"
-            android:layout_row="5"
-            android:layout_column="0" />
+    <FrameLayout
+        android:layout_width="144dp"
+        android:layout_height="176dp"
+        android:id="@+id/previewFrame"
+        android:layout_alignParentBottom="true"
+        ></FrameLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="Service Text"
-            android:id="@+id/textView2"
-            android:layout_row="6"
-            android:layout_column="0" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Start Server"
-            android:id="@+id/button4"
-            android:layout_row="7"
-            android:layout_column="0" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Start Preview"
-            android:id="@+id/button5"
-            android:layout_row="8"
-            android:layout_column="0" />
-
-        <FrameLayout
-            android:layout_width="144dp"
-            android:layout_height="176dp"
-            android:layout_row="9"
-            android:id="@+id/previewFrame"
-            android:layout_column="0"></FrameLayout>
-
-    </GridLayout>
 </RelativeLayout>
