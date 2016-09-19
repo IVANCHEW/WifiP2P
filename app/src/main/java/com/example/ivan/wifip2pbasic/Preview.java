@@ -1,13 +1,19 @@
 package com.example.ivan.wifip2pbasic;
 
 import android.content.Context;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.hardware.Camera;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.ResultReceiver;
 import android.support.v4.graphics.ColorUtils;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+
+import java.io.ByteArrayOutputStream;
 
 //Preview class used to start the camera preview
 public class Preview extends SurfaceView implements SurfaceHolder .Callback, Camera.PreviewCallback{
@@ -66,13 +72,6 @@ public class Preview extends SurfaceView implements SurfaceHolder .Callback, Cam
         param.setPreviewSize(previewSize.width,previewSize.height);
         //Constant for NV21 format is 17
         param.setPreviewFormat(17);
-
-        /*//Check Exposure Compensation
-        Log.d("NEUTRAL3", "Min Exposure: " + param.getMinExposureCompensation());
-        Log.d("NEUTRAL3", "Max Exposure: " + param.getMaxExposureCompensation());
-        */
-
-        //param.setExposureCompensation(0);
 
         mCamera.setDisplayOrientation(90);
         mCamera.setParameters(param);
@@ -148,41 +147,25 @@ public class Preview extends SurfaceView implements SurfaceHolder .Callback, Cam
 
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
+        //count = count + 1;
+        //Log.d("NEUTRAL", "Frame received" + count);
 
-        //Log.d("NEUTRAL2", "Received Frame");
+        Camera.Parameters parameters = camera.getParameters();
+        int width = parameters.getPreviewSize().width;
+        int height = parameters.getPreviewSize().height;
 
-        if (TrackTarget==true) {
+        YuvImage yuv = new YuvImage(data, parameters.getPreviewFormat(), width, height, null);
 
-            //Pixel Analysis
-            findTarget(pixels, data,previewSize.width, previewSize.height);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
 
-            //Log.d("NEUTRAL2", "Track Target Value" + targetPosition);
+        byte[] bytes = out.toByteArray();
 
-            if (targetPosition!=0){
-                previewHandler.removeCallbacksAndMessages(null);
-                Message msg = Message.obtain();
-
-
-                String message = "" + targetPosition;
-
-                //Original Code used ot send message to UI thread
-
-                msg.obj = message;
-                msg.setTarget(previewHandler);
-                msg.sendToTarget();
-
-
-                /*
-                Bundle bundle = new Bundle();
-                bundle.putIntArray("FramePicture",pixels);
-                bundle.putString("TargetPosition",message);
-                msg.setData(bundle);
-                previewHandler.sendMessage(msg);
-                */
-            }
-
-        }
-
+        previewHandler.removeCallbacksAndMessages(null);
+        Message msg = Message.obtain();
+        msg.obj =bytes;
+        msg.setTarget(previewHandler);
+        msg.sendToTarget();
     }
 
     void findTarget(int[] pixels, byte[] yuv420sp, int width, int height) {

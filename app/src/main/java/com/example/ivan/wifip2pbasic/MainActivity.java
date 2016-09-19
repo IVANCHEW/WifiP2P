@@ -5,12 +5,17 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
+import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.Handler;
+import android.os.Message;
 import android.os.ResultReceiver;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -20,7 +25,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -43,7 +47,6 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
     Button button1, button2, button3, button4, button5;
     EditText editText1;
     FrameLayout frame1;
-    Spinner spinner1;
     TextView text1, text2;
     Boolean validPeers = false;
 
@@ -59,12 +62,15 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
     Boolean serverStatus=false;
     private Intent serverServiceIntent;
 
-    ImageView imageView1;
+    ImageView imageView1, imageView2;
     Camera mainCamera;
     Preview mPreview;
 
-    Integer nserver = 0;
+    int count =0 ;
+    int nserver=0;
     public String sendData;
+    public byte[] pictureData, receivePData;
+    Bitmap bmp, bmpout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,12 +93,12 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
         button4 = (Button)findViewById(R.id.button4);
         button5= (Button)findViewById(R.id.button5);
         text1 = (TextView)findViewById(R.id.textView1);
-        spinner1 = (Spinner)findViewById(R.id.spinner1);
         frame1= (FrameLayout)findViewById(R.id.previewFrame);
         editText1 = (EditText)findViewById(R.id.editText);
+        imageView2 = (ImageView)findViewById(R.id.imageView2);
 
-        /*
         //INITIATE THE CAMERA
+        /*
         try{
 
             mainCamera= Camera.open();
@@ -100,24 +106,26 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
             Log.d("NEUTRAL","Error opening camera");
 
         }
+
         mPreview = new Preview(this, mainCamera);
 
-        //START THE PREVIEW
-        try{
+        //Define the handler to listen for messages from the Preview Class
+        mPreview.callHandler(new Handler(){
 
-            //Initiate the preview
-            frame1.addView(mPreview);
+            public void handleMessage(Message msg){
 
-            Log.d("NEUTRAL", "Camera Preview Class Added");
+                //Message to contain pictureData
+                Log.d("NEUTRAL", "Received Callback");
+                pictureData =(byte[]) msg.obj;
+                sendData();
+                //bmp = BitmapFactory.decodeByteArray(pictureData, 0, pictureData.length);
+                //imageView2.setImageBitmap(bmp);
 
-        }catch(RuntimeException e){
+            }
 
-            Log.d("NEUTRAL","Error in OnCreate");
-            System.err.println(e);
-            return;
-
-        }
+        });
         */
+
         //DISCOVER PEERS
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -145,6 +153,8 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
             public void onClick(View v) {
 
                 if (validPeers==true){
+                    config.wps.setup = WpsInfo.PBC;
+                    config.groupOwnerIntent = 15;
                     config.deviceAddress = peers.get(0).deviceAddress;
                     mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
                         @Override
@@ -167,8 +177,10 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
         button3.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
+                /*
                 sendData = editText1.getText().toString();
                 sendData();
+                */
             }
         });
 
@@ -180,14 +192,29 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
             }
         });
 
-        //Start Preview
+        //============START THE PREVIEW=================
         button5.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
+                //START THE PREVIEW
+                try{
 
+                    //Initiate the preview
+                    frame1.addView(mPreview);
 
+                    Log.d("NEUTRAL", "Camera Preview Class Added");
+
+                }catch(RuntimeException e){
+
+                    Log.d("NEUTRAL","Error in OnCreate");
+                    System.err.println(e);
+                    return;
+
+                }
             }
+
+
         });
 
     }
@@ -262,7 +289,8 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
                 clientServiceIntent = new Intent(this, ClientService.class);
                 clientServiceIntent.putExtra("port",new Integer(port));
                 clientServiceIntent.putExtra("wifiInfo",wifiP2pInfo);
-                clientServiceIntent.putExtra("sendData", new String(sendData));
+                //clientServiceIntent.putExtra("sendData", new String(sendData));
+                clientServiceIntent.putExtra("pictureData",pictureData);
                 clientServiceIntent.putExtra("clientResult", new ResultReceiver(null){
 
                     @Override
@@ -320,11 +348,24 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
                         }else{
 
                             //Receives updates from the Service class and provides status on the UI
+                            /*
                             final TextView status_text= (TextView) findViewById(R.id.textView2);
                             status_text.post(new Runnable() {
                                 @Override
                                 public void run() {
                                     status_text.setText((String)resultData.get("message"));
+                                }
+                            });*/
+                            final ImageView iv = (ImageView) findViewById(R.id.imageView2);
+                            iv.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    receivePData = (byte[])resultData.get("pictureData");
+                                    count = receivePData.length;
+                                    Log.d("NEUTRAL", "received data: count");
+                                    bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
+                                    iv.setImageBitmap(bmpout);
+
                                 }
                             });
 

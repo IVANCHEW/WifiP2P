@@ -24,6 +24,7 @@ public class ServerService extends IntentService {
 
     private int port;
     private ResultReceiver serverResult;
+    private byte[] pictureData;
 
     public ServerService() {
         super("ServerService");
@@ -53,28 +54,28 @@ public class ServerService extends IntentService {
                 OutputStream os = socket.getOutputStream();
                 PrintWriter pw = new PrintWriter(os);
 
-                signalActivity("About to start Handshake");
                 Log.d("NEUTRAL","Server Service Class: About to start Handhskae");
 
                 //Receive Data
                 Integer length = is.available();
+                //Log.d("NEUTRAL", "Data received: " + length);
                 byte[] buffer = new byte[length];
                 is.read(buffer);
+                pictureData=buffer;
 
-                String test = new String(buffer, "UTF-8");
+                //String test = new String(buffer, "UTF-8");
                 //Complete method
+                signalActivity();
                 socket.close();
-
-
-                Log.d("NEUTRAL","Data Transfer Completed: " + test);
-                signalActivity(test);
-
+                Log.d("NEUTRAL","Data Transfer Completed: ");
             }
 
         }catch(IOException e){
-            signalActivity(e.getMessage());
+            //signalActivity(e.getMessage());
+            Log.d("NEUTRAL", e.getMessage());
         }catch(Exception e){
-            signalActivity(e.getMessage());
+            //signalActivity(e.getMessage());
+            Log.d("NEUTRAL", e.getMessage());
         }
 
         serverResult.send(port,null);
@@ -82,9 +83,11 @@ public class ServerService extends IntentService {
 
     }
 
-    public void signalActivity(String message){
+    public void signalActivity(){
+        Log.d("NEUTRAL", "Signal Activity");
         Bundle b = new Bundle();
-        b.putString("message",message);
+        //b.putString("message",message);
+        b.putByteArray("pictureData", pictureData);
         serverResult.send(port,b);
     }
 
