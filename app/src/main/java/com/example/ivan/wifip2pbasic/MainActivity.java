@@ -21,16 +21,20 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends Activity implements WifiP2pManager.PeerListListener{
+public class MainActivity extends Activity implements OnItemSelectedListener, WifiP2pManager.PeerListListener{
 
     WifiP2pManager mManager;
     WifiP2pManager.Channel mChannel;
@@ -39,6 +43,9 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
     List<WifiP2pDevice> peers = new ArrayList<WifiP2pDevice>();
     List<WifiP2pDevice> peersConnect = new ArrayList<WifiP2pDevice>();
     List<String> peerNames = new ArrayList<String>();
+    Spinner spinner1;
+    ArrayAdapter<String> spinnerArrayAdapter;
+    int peerSelected;
 
     WifiP2pConfig config = new WifiP2pConfig();
 
@@ -62,7 +69,7 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
     Boolean serverStatus=false;
     private Intent serverServiceIntent;
 
-    ImageView imageView1, imageView2;
+    ImageView imageView2;
     Camera mainCamera;
     Preview mPreview;
 
@@ -97,8 +104,14 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
         editText1 = (EditText)findViewById(R.id.editText);
         imageView2 = (ImageView)findViewById(R.id.imageView2);
 
+        spinner1 = (Spinner)findViewById(R.id.spinner);
+        spinnerArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, peerNames);
+        spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner1.setAdapter(spinnerArrayAdapter);
+        spinner1.setOnItemSelectedListener(this);
+
         //INITIATE THE CAMERA
-        /*
+
         try{
 
             mainCamera= Camera.open();
@@ -124,18 +137,35 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
             }
 
         });
-        */
+
 
         //DISCOVER PEERS
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                
                 mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener(){
 
                     @Override
                     public void onSuccess() {
-                        text1.setText("Peers Discovered");
+                        if (peers.size()>0){
+                            text1.setText("Peers Discovered");
+                            //Get Device Names
+                            peerNames.clear();
+                            int i = 0;
+                            while(i<peers.size()){
+                                peerNames.add(peers.get(i).deviceName);
+                                Log.d("NEUTRAL","Device name: " + peerNames.get(i));
+                                i++;
+                            }
+                            spinner1.setAdapter(spinnerArrayAdapter);
+                            Log.d("NEUTRAL", "Peers discovered");
+                        }
+                        else
+                        {
+                            text1.setText("No Peers Available");
+                            Log.d("NEUTRAL", "No Peers Available");
+                        }
                     }
 
                     @Override
@@ -147,7 +177,7 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
             }
         });
 
-        //CONNECT TO THE FIRST PEER DETECTED
+        //CONNECT TO PEER
         button2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -155,7 +185,7 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
                 if (validPeers==true){
                     config.wps.setup = WpsInfo.PBC;
                     config.groupOwnerIntent = 15;
-                    config.deviceAddress = peers.get(0).deviceAddress;
+                    config.deviceAddress = peers.get(peerSelected).deviceAddress;
                     mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
                         @Override
                         public void onSuccess() {
@@ -219,6 +249,19 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
 
     }
 
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        spinner1.setSelection(position);
+        //String selState = (String) spinner1.getSelectedItem();
+        peerSelected = position;
+        Log.d("NEUTRAL","Spinner selection position: " + position);
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> arg0) {
+        // TODO Auto-generated method stub
+
+    }
+
     @Override
     protected void onResume(){
         super.onResume();
@@ -238,17 +281,6 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
         peers.clear();
         peers.addAll(peerList.getDeviceList());
         validPeers = true;
-        //Get Device Names
-        peerNames.clear();
-
-        int i = 0;
-        while(i<peers.size()){
-            peerNames.add(peers.get(i).deviceName);
-
-            Log.d("NEUTRAL","Device name: " + peerNames.get(i));
-            i++;
-        }
-
     }
 
     public void setClientStatus(String message){
@@ -285,7 +317,7 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
             else
             {
                 //Launch Client Service
-                Log.d("NEUTRAL","Main Activity: No errors found, launching client service");
+                Log.d("NEUTRAL","Main Activity: launching client service");
                 clientServiceIntent = new Intent(this, ClientService.class);
                 clientServiceIntent.putExtra("port",new Integer(port));
                 clientServiceIntent.putExtra("wifiInfo",wifiP2pInfo);
@@ -299,7 +331,7 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
 
                             if(resultData==null){
 
-                                Log.d("NEUTRAL","Transfer Status: False");
+                                Log.d("NEUTRAL","Main Activity: client result received");
                                 activeTransfer=false;
 
                             }else{
@@ -311,6 +343,7 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
                                     public void run() {
                                         client_status_text.setText((String)resultData.get("message"));
                                     }
+
                                 });
 
                             }
@@ -362,10 +395,11 @@ public class MainActivity extends Activity implements WifiP2pManager.PeerListLis
                                 public void run() {
                                     receivePData = (byte[])resultData.get("pictureData");
                                     count = receivePData.length;
-                                    Log.d("NEUTRAL", "received data: count");
-                                    bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
-                                    iv.setImageBitmap(bmpout);
-
+                                    Log.d("NEUTRAL", "received data: "+ count);
+                                    if(count>=1023){
+                                        bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
+                                        iv.setImageBitmap(bmpout);
+                                    }
                                 }
                             });
 

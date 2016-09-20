@@ -27,7 +27,7 @@
         android:layout_height="50dp"
         android:layout_width="300dp"
         android:textColor="@color/green"
-        />
+        android:background="#000000" />
 
     <Button
         android:layout_width="wrap_content"
@@ -93,6 +93,13 @@
         android:layout_alignTop="@+id/previewFrame"
         android:layout_toRightOf="@+id/previewFrame"
         android:layout_toEndOf="@+id/previewFrame" />
+
+    <Spinner
+        android:layout_width="300dp"
+        android:layout_height="50dp"
+        android:id="@+id/spinner"
+        android:layout_below="@+id/editText"
+        android:spinnerMode="dropdown" />
 
 
 </RelativeLayout>

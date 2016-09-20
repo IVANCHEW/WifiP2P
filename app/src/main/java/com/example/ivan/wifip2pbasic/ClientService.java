@@ -40,7 +40,7 @@ public class ClientService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
 
-        Log.d("NEUTRAL","Client Service Class: Intent Received");
+        Log.d("NEUTRAL","Client Service: Intent Received");
         port = ((Integer) intent.getExtras().get("port")).intValue();
         clientResult = (ResultReceiver) intent.getExtras().get("clientResult");
         wifiP2pInfo = (WifiP2pInfo) intent.getExtras().get("wifiInfo");
@@ -62,8 +62,8 @@ public class ClientService extends IntentService {
                 InputStreamReader isr = new InputStreamReader(is);
                 BufferedReader br = new BufferedReader(isr);
 
-                signalActivity("About to start handshake");
-                Log.d("NEUTRAL", "Client Service Class: About to start handshake");
+                //signalActivity("About to start handshake");
+                //Log.d("NEUTRAL", "Client Service Class: About to start handshake");
 
                 //byte[] buffer = sendData.getBytes("UTF-8");
                //Send Data
@@ -95,8 +95,8 @@ public class ClientService extends IntentService {
 
                 clientSocket.close();
 
-                signalActivity("Data transfer complete, close socket");
-
+                //signalActivity("Data transfer complete, close socket");
+                Log.d("NEUTRAL","Client Service: Data Transfer Complete");
 
             }catch (IOException e){
                 signalActivity(e.getMessage());
@@ -117,7 +117,7 @@ public class ClientService extends IntentService {
         Bundle b = new Bundle();
         b.putString("message",message);
         clientResult.send(port,b);
-        Log.d("NEUTRAL","Client Service Signaled Activity");
+        Log.d("NEUTRAL","Client Service: Signaled Activity");
 
     }
 
