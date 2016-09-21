@@ -27,6 +27,7 @@ public class ServerService extends IntentService {
     private int port;
     private ResultReceiver serverResult;
     private byte[] pictureData;
+    private boolean checkStatus = false;
 
     public ServerService() {
         super("ServerService");
@@ -45,27 +46,31 @@ public class ServerService extends IntentService {
         Socket socket = null;
 
         try{
-            welcomeSocket = new ServerSocket(port);
+            checkStatus = (Boolean) intent.getExtras().get("checkStatus");
 
-            while(serviceEnabled){
+            if (checkStatus==false){
+                checkStatus=true;
+                welcomeSocket = new ServerSocket(port);
+                while(serviceEnabled){
+                    Log.d("NEUTRAL","Sever Reading");
+                    socket = welcomeSocket.accept();
+                    InputStream is = socket.getInputStream();
+                    InputStreamReader isr = new InputStreamReader(is);
+                    BufferedReader br = new BufferedReader(isr);
+                    OutputStream os = socket.getOutputStream();
+                    PrintWriter pw = new PrintWriter(os);
 
-                socket = welcomeSocket.accept();
-                InputStream is = socket.getInputStream();
-                InputStreamReader isr = new InputStreamReader(is);
-                BufferedReader br = new BufferedReader(isr);
-                OutputStream os = socket.getOutputStream();
-                PrintWriter pw = new PrintWriter(os);
+                    //Receive Data
+                    Integer length = is.available();
+                    byte[] buffer = new byte[length];
+                    is.read(buffer);
+                    pictureData=buffer;
 
-                //Receive Data
-                Integer length = is.available();
-                byte[] buffer = new byte[length];
-                is.read(buffer);
-                pictureData=buffer;
-
-                //Complete method
-                signalActivity();
-                socket.close();
-                //Log.d("NEUTRAL","Data Transfer Completed");
+                    //Complete method
+                    signalActivity();
+                    socket.close();
+                    //Log.d("NEUTRAL","Data Transfer Completed");
+                }
             }
 
         }catch(IOException e){

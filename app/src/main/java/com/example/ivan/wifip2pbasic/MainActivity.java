@@ -77,6 +77,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     Bitmap bmpout, rbmpout;
     ImageView imageview;
     Matrix matrix = new Matrix();
+    Boolean imageProcessing=false;
 
     int count =0 ;
     int nserver=0;
@@ -211,6 +212,21 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         button4.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
+
+                //============================INITIATE THE IMAGEVIEW UPDATE============================
+                /*Runnable runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
+                        imageview.setImageBitmap(bmpout);
+                    }
+                };
+
+                Thread myThread = new Thread(runnable);
+                myThread.start();
+                */
+
+                //============================START SERVER============================
                 startServer();
             }
         });
@@ -348,6 +364,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
 
             serverServiceIntent = new Intent(this, ServerService.class);
             serverServiceIntent.putExtra("port", new Integer(port));
+            serverServiceIntent.putExtra("checkStatus", imageProcessing);
             serverServiceIntent.putExtra("serverResult", new ResultReceiver(null){
                 @Override
                 protected void onReceiveResult(int resultCode, final Bundle resultData){
@@ -358,6 +375,26 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                             serverStatus=false;
                             Log.d("NEUTRAL", "Main Activity: Server Stopped");
                         }else{
+
+                            receivePData = (byte[])resultData.get("pictureData");
+                            count = receivePData.length;
+
+                            if(count>2000 && imageProcessing==false){
+                                imageview.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Log.d("NEUTRAL","Processing Frame");
+                                        imageProcessing = true;
+                                        bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
+                                        imageview.setImageBitmap(bmpout);
+                                        imageProcessing = false;
+                                        serverServiceIntent.putExtra("checkStatus", imageProcessing);
+                                    }
+                                });
+
+                            }
+
+                            /*
                             final ImageView iv = (ImageView) findViewById(R.id.imageView2);
                             iv.post(new Runnable() {
                                 @Override
@@ -375,6 +412,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                                     receivePData = null;
                                 }
                             });
+                            */
 
 
                         }
