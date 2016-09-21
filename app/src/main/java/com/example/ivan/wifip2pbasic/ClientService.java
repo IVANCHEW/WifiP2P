@@ -44,7 +44,6 @@ public class ClientService extends IntentService {
         port = ((Integer) intent.getExtras().get("port")).intValue();
         clientResult = (ResultReceiver) intent.getExtras().get("clientResult");
         wifiP2pInfo = (WifiP2pInfo) intent.getExtras().get("wifiInfo");
-        //sendData =((String) intent.getExtras().get("sendData"));
         pictureData =(byte[])intent.getExtras().get("pictureData");
 
         if(!wifiP2pInfo.isGroupOwner){
@@ -62,12 +61,7 @@ public class ClientService extends IntentService {
                 InputStreamReader isr = new InputStreamReader(is);
                 BufferedReader br = new BufferedReader(isr);
 
-                //signalActivity("About to start handshake");
-                //Log.d("NEUTRAL", "Client Service Class: About to start handshake");
-
-                //byte[] buffer = sendData.getBytes("UTF-8");
                //Send Data
-                //os.write(buffer,0,buffer.length);
                 os.write(pictureData,0,pictureData.length);
                 os.flush();
                 /*

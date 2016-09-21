@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
@@ -69,15 +71,15 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     Boolean serverStatus=false;
     private Intent serverServiceIntent;
 
-    ImageView imageView2;
     Camera mainCamera;
     Preview mPreview;
+    public byte[] pictureData, receivePData;
+    Bitmap bmpout, rbmpout;
+    ImageView imageview;
+    Matrix matrix = new Matrix();
 
     int count =0 ;
     int nserver=0;
-    public String sendData;
-    public byte[] pictureData, receivePData;
-    Bitmap bmp, bmpout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,7 +104,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         text1 = (TextView)findViewById(R.id.textView1);
         frame1= (FrameLayout)findViewById(R.id.previewFrame);
         editText1 = (EditText)findViewById(R.id.editText);
-        imageView2 = (ImageView)findViewById(R.id.imageView2);
+        imageview=(ImageView)findViewById(R.id.imageView2);
 
         spinner1 = (Spinner)findViewById(R.id.spinner);
         spinnerArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, peerNames);
@@ -110,70 +112,61 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         spinner1.setAdapter(spinnerArrayAdapter);
         spinner1.setOnItemSelectedListener(this);
 
-        //INITIATE THE CAMERA
-
+        //====================================INITIATE THE CAMERA=================================
         try{
-
             mainCamera= Camera.open();
         }catch(Exception e){
             Log.d("NEUTRAL","Error opening camera");
-
         }
 
         mPreview = new Preview(this, mainCamera);
+        matrix.postRotate(90);
 
         //Define the handler to listen for messages from the Preview Class
         mPreview.callHandler(new Handler(){
 
             public void handleMessage(Message msg){
-
-                //Message to contain pictureData
-                Log.d("NEUTRAL", "Received Callback");
                 pictureData =(byte[]) msg.obj;
                 sendData();
-                //bmp = BitmapFactory.decodeByteArray(pictureData, 0, pictureData.length);
-                //imageView2.setImageBitmap(bmp);
-
             }
 
         });
 
+        //====================================INITIATE WIFI DIRECT====================================
+        mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener(){
 
-        //DISCOVER PEERS
+            @Override
+            public void onSuccess() {
+                text1.setText("Wifi Direct Initiation: Peer Discovery Conducted");
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                text1.setText("Wifi Direct Initiation: Peer Discovery Unsuccessful");
+            }
+        });
+
+        //====================================INITATE BUTTONS====================================
+        //UPDATE PEERS ON UI
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                
-                mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener(){
 
-                    @Override
-                    public void onSuccess() {
-                        if (peers.size()>0){
-                            text1.setText("Peers Discovered");
-                            //Get Device Names
-                            peerNames.clear();
-                            int i = 0;
-                            while(i<peers.size()){
-                                peerNames.add(peers.get(i).deviceName);
-                                Log.d("NEUTRAL","Device name: " + peerNames.get(i));
-                                i++;
-                            }
-                            spinner1.setAdapter(spinnerArrayAdapter);
-                            Log.d("NEUTRAL", "Peers discovered");
-                        }
-                        else
-                        {
-                            text1.setText("No Peers Available");
-                            Log.d("NEUTRAL", "No Peers Available");
-                        }
+                peerNames.clear();
+
+                if (peers.size()>0){
+                    text1.setText("Peers Discovered");
+                    int i = 0;
+                    while(i<peers.size()){
+                        peerNames.add(peers.get(i).deviceName);
+                        i++;
                     }
-
-                    @Override
-                    public void onFailure(int reason) {
-                        text1.setText("Peer Discovery Unsuccessful");
-                    }
-                });
-
+                    spinner1.setAdapter(spinnerArrayAdapter);
+                }
+                else
+                {
+                    text1.setText("No Peers Available");
+                }
             }
         });
 
@@ -227,20 +220,12 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
             @Override
             public void onClick(View v) {
 
-                //START THE PREVIEW
                 try{
-
-                    //Initiate the preview
                     frame1.addView(mPreview);
-
-                    Log.d("NEUTRAL", "Camera Preview Class Added");
-
                 }catch(RuntimeException e){
-
                     Log.d("NEUTRAL","Error in OnCreate");
                     System.err.println(e);
                     return;
-
                 }
             }
 
@@ -251,9 +236,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
 
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         spinner1.setSelection(position);
-        //String selState = (String) spinner1.getSelectedItem();
         peerSelected = position;
-        Log.d("NEUTRAL","Spinner selection position: " + position);
     }
 
     @Override
@@ -277,7 +260,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     @Override
     public void onPeersAvailable(WifiP2pDeviceList peerList){
         Log.d("NEUTRAL","Main Activity: Listener");
-
         peers.clear();
         peers.addAll(peerList.getDeviceList());
         validPeers = true;
@@ -313,7 +295,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                 Log.d("NEUTRAL","Error - Missing Wifi P2P Information");
                 text1.setText("Error - Missing Wifi P2P Information");
             }
-            //No errors found, begin transmission of data
             else
             {
                 //Launch Client Service
@@ -321,7 +302,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                 clientServiceIntent = new Intent(this, ClientService.class);
                 clientServiceIntent.putExtra("port",new Integer(port));
                 clientServiceIntent.putExtra("wifiInfo",wifiP2pInfo);
-                //clientServiceIntent.putExtra("sendData", new String(sendData));
                 clientServiceIntent.putExtra("pictureData",pictureData);
                 clientServiceIntent.putExtra("clientResult", new ResultReceiver(null){
 
@@ -335,7 +315,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                                 activeTransfer=false;
 
                             }else{
-
                                 //Receives updates from the Service class and provides status on the UI
                                 final TextView client_status_text= (TextView) findViewById(R.id.textView2);
                                 client_status_text.post(new Runnable() {
@@ -365,7 +344,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
 
     public void startServer(){
 
-        if(serverStatus==false){
+        if(!serverStatus){
 
             serverServiceIntent = new Intent(this, ServerService.class);
             serverServiceIntent.putExtra("port", new Integer(port));
@@ -379,27 +358,21 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                             serverStatus=false;
                             Log.d("NEUTRAL", "Main Activity: Server Stopped");
                         }else{
-
-                            //Receives updates from the Service class and provides status on the UI
-                            /*
-                            final TextView status_text= (TextView) findViewById(R.id.textView2);
-                            status_text.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    status_text.setText((String)resultData.get("message"));
-                                }
-                            });*/
                             final ImageView iv = (ImageView) findViewById(R.id.imageView2);
                             iv.post(new Runnable() {
                                 @Override
                                 public void run() {
                                     receivePData = (byte[])resultData.get("pictureData");
                                     count = receivePData.length;
-                                    Log.d("NEUTRAL", "received data: "+ count);
-                                    if(count>=1023){
+                                    //Log.d("NEUTRAL", "received data: "+ count);
+
+                                    if(count>2000){
                                         bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
+                                        //rbmpout = Bitmap.createBitmap(bmpout,0,0,bmpout.getWidth(),bmpout.getHeight(),matrix,true);
                                         iv.setImageBitmap(bmpout);
                                     }
+
+                                    receivePData = null;
                                 }
                             });
 

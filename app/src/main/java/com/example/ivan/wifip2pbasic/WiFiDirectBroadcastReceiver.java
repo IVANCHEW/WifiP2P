@@ -44,7 +44,7 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
             }
 
         }else if(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
-            //Call WifiP2pManager.requestPeers() to gte a list of current peers
+            //Call WifiP2pManager.requestPeers() to get a list of current peers
 
             /*Request available peer from the wifi p2p manager. This is an asynchronous call and
             the calling activity is notified with a callback on PeerListListener.onPeersAvailable()
@@ -63,12 +63,12 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
 
             if(networkState.isConnected()){
                 Log.d("NEUTRAL","Wifi P2P Connection Changed Intent passed, connected");
-                mActivity.setClientStatus("Connection Status: Connected");
+                mActivity.setClientStatus("Connection Status: Connection Established");
                 mActivity.setNetworkToReadyState(true,wifiInfo,device);
 
             }else{
                 mActivity.setNetworkToPendingState(false);
-                mActivity.setClientStatus("Connection Status: Disabled");
+                mActivity.setClientStatus("Connection Status: No connection");
                 mManager.cancelConnect(mChannel,null);
             }
 

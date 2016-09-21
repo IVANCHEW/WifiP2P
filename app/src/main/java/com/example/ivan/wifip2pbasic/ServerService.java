@@ -2,6 +2,8 @@ package com.example.ivan.wifip2pbasic;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.util.Log;
@@ -45,7 +47,7 @@ public class ServerService extends IntentService {
         try{
             welcomeSocket = new ServerSocket(port);
 
-            while(true && serviceEnabled){
+            while(serviceEnabled){
 
                 socket = welcomeSocket.accept();
                 InputStream is = socket.getInputStream();
@@ -54,41 +56,34 @@ public class ServerService extends IntentService {
                 OutputStream os = socket.getOutputStream();
                 PrintWriter pw = new PrintWriter(os);
 
-                Log.d("NEUTRAL","Server Service Class: About to start Handhskae");
-
                 //Receive Data
                 Integer length = is.available();
-                //Log.d("NEUTRAL", "Data received: " + length);
                 byte[] buffer = new byte[length];
                 is.read(buffer);
                 pictureData=buffer;
 
-                //String test = new String(buffer, "UTF-8");
                 //Complete method
                 signalActivity();
                 socket.close();
-                Log.d("NEUTRAL","Data Transfer Completed: ");
+                //Log.d("NEUTRAL","Data Transfer Completed");
             }
 
         }catch(IOException e){
-            //signalActivity(e.getMessage());
             Log.d("NEUTRAL", e.getMessage());
         }catch(Exception e){
-            //signalActivity(e.getMessage());
             Log.d("NEUTRAL", e.getMessage());
         }
-
-        serverResult.send(port,null);
-
-
+        //serverResult.send(port,null);
     }
 
     public void signalActivity(){
-        Log.d("NEUTRAL", "Signal Activity");
+
+        //Log.d("NEUTRAL", "Signal Activity");
         Bundle b = new Bundle();
         //b.putString("message",message);
         b.putByteArray("pictureData", pictureData);
         serverResult.send(port,b);
+
     }
 
     public void onDestroy(){
