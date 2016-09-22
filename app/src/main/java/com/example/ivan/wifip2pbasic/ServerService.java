@@ -52,7 +52,6 @@ public class ServerService extends IntentService {
                 checkStatus=true;
                 welcomeSocket = new ServerSocket(port);
                 while(serviceEnabled){
-                    Log.d("NEUTRAL","Sever Reading");
                     socket = welcomeSocket.accept();
                     InputStream is = socket.getInputStream();
                     InputStreamReader isr = new InputStreamReader(is);
@@ -69,7 +68,6 @@ public class ServerService extends IntentService {
                     //Complete method
                     signalActivity();
                     socket.close();
-                    //Log.d("NEUTRAL","Data Transfer Completed");
                 }
             }
 
@@ -78,14 +76,11 @@ public class ServerService extends IntentService {
         }catch(Exception e){
             Log.d("NEUTRAL", e.getMessage());
         }
-        //serverResult.send(port,null);
     }
 
     public void signalActivity(){
 
-        //Log.d("NEUTRAL", "Signal Activity");
         Bundle b = new Bundle();
-        //b.putString("message",message);
         b.putByteArray("pictureData", pictureData);
         serverResult.send(port,b);
 

@@ -39,8 +39,6 @@ public class ClientService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-
-        Log.d("NEUTRAL","Client Service: Intent Received");
         port = ((Integer) intent.getExtras().get("port")).intValue();
         clientResult = (ResultReceiver) intent.getExtras().get("clientResult");
         wifiP2pInfo = (WifiP2pInfo) intent.getExtras().get("wifiInfo");
@@ -64,22 +62,6 @@ public class ClientService extends IntentService {
                //Send Data
                 os.write(pictureData,0,pictureData.length);
                 os.flush();
-                /*
-                while(true){
-
-                    int byteRead = bis.read(buffer,0,buffer.length);
-
-                    if (byteRead==-1){
-                        break;
-                    }
-
-                    os.write(buffer,0,byteRead);
-                    os.flush();
-                }
-                 */
-
-
-                //Close Socket after send complete
                 br.close();
                 isr.close();
                 is.close();
@@ -88,10 +70,6 @@ public class ClientService extends IntentService {
                 os.close();
 
                 clientSocket.close();
-
-                //signalActivity("Data transfer complete, close socket");
-                Log.d("NEUTRAL","Client Service: Data Transfer Complete");
-
             }catch (IOException e){
                 signalActivity(e.getMessage());
             }catch (Exception e){
@@ -107,20 +85,16 @@ public class ClientService extends IntentService {
     }
 
     public void signalActivity(String message){
-
         Bundle b = new Bundle();
         b.putString("message",message);
         clientResult.send(port,b);
         Log.d("NEUTRAL","Client Service: Signaled Activity");
-
     }
 
     public void onDestoy(){
-
         serviceEnabled=false;
         Log.d("NEUTRAL","Client Service Destroyed");
         stopSelf();
-
     }
 
 }

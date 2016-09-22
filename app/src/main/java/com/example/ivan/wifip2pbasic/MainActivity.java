@@ -127,8 +127,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         mPreview.callHandler(new Handler(){
 
             public void handleMessage(Message msg){
-                pictureData =(byte[]) msg.obj;
-                sendData();
+                if (activeTransfer==false){
+                    pictureData =(byte[]) msg.obj;
+                    sendData();
+                }
             }
 
         });
@@ -212,21 +214,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         button4.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-
-                //============================INITIATE THE IMAGEVIEW UPDATE============================
-                /*Runnable runnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
-                        imageview.setImageBitmap(bmpout);
-                    }
-                };
-
-                Thread myThread = new Thread(runnable);
-                myThread.start();
-                */
-
-                //============================START SERVER============================
                 startServer();
             }
         });
@@ -235,7 +222,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         button5.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 try{
                     frame1.addView(mPreview);
                 }catch(RuntimeException e){
@@ -244,10 +230,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                     return;
                 }
             }
-
-
         });
-
     }
 
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -258,7 +241,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     @Override
     public void onNothingSelected(AdapterView<?> arg0) {
         // TODO Auto-generated method stub
-
     }
 
     @Override
@@ -314,7 +296,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
             else
             {
                 //Launch Client Service
-                Log.d("NEUTRAL","Main Activity: launching client service");
                 clientServiceIntent = new Intent(this, ClientService.class);
                 clientServiceIntent.putExtra("port",new Integer(port));
                 clientServiceIntent.putExtra("wifiInfo",wifiP2pInfo);
@@ -326,29 +307,20 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                         if(resultCode == port){
 
                             if(resultData==null){
-
-                                Log.d("NEUTRAL","Main Activity: client result received");
                                 activeTransfer=false;
 
                             }else{
-                                //Receives updates from the Service class and provides status on the UI
                                 final TextView client_status_text= (TextView) findViewById(R.id.textView2);
                                 client_status_text.post(new Runnable() {
                                     @Override
                                     public void run() {
                                         client_status_text.setText((String)resultData.get("message"));
                                     }
-
                                 });
-
                             }
-
                         }
                     }
-
-
                 });
-
                 activeTransfer = true;
                 this.startService(clientServiceIntent);
             }
@@ -379,46 +351,21 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                             receivePData = (byte[])resultData.get("pictureData");
                             count = receivePData.length;
 
-                            if(count>2000 && imageProcessing==false){
+                            if(count>1500 && imageProcessing==false){
                                 imageview.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        Log.d("NEUTRAL","Processing Frame");
                                         imageProcessing = true;
+                                        serverServiceIntent.putExtra("checkStatus", imageProcessing);
                                         bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
                                         imageview.setImageBitmap(bmpout);
                                         imageProcessing = false;
                                         serverServiceIntent.putExtra("checkStatus", imageProcessing);
                                     }
                                 });
-
                             }
-
-                            /*
-                            final ImageView iv = (ImageView) findViewById(R.id.imageView2);
-                            iv.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    receivePData = (byte[])resultData.get("pictureData");
-                                    count = receivePData.length;
-                                    //Log.d("NEUTRAL", "received data: "+ count);
-
-                                    if(count>2000){
-                                        bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
-                                        //rbmpout = Bitmap.createBitmap(bmpout,0,0,bmpout.getWidth(),bmpout.getHeight(),matrix,true);
-                                        iv.setImageBitmap(bmpout);
-                                    }
-
-                                    receivePData = null;
-                                }
-                            });
-                            */
-
-
                         }
-
                     }
-
                 }
             });
 
