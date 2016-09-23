@@ -14,20 +14,33 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
+        android:text="Status Update"
         android:id="@+id/textView1"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:textColor="@color/green"/>
+        android:textColor="@color/green"
+        android:textSize="20dp"/>
 
     <EditText
-        android:text="Hello World 2!"
+        android:text="Text Field"
         android:id="@+id/editText"
-        android:layout_below="@+id/textView2"
+        android:layout_below="@+id/textView1"
         android:layout_height="50dp"
         android:layout_width="300dp"
         android:textColor="@color/green"
-        android:background="#000000" />
+        android:background="#000000"
+        android:textSize="20dp"/>
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text=""
+        android:id="@+id/textView2"
+        android:layout_below="@id/editText"
+        android:textColor="@color/green"
+        android:textSize="20dp"/>
 
     <Button
         android:layout_width="wrap_content"
@@ -35,9 +48,7 @@
         android:text="Discover Peers"
         android:id="@+id/button1"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="50dp"
-        android:layout_below="@id/editText" />
+        android:layout_alignParentBottom="true" />
 
     <Button
         android:layout_width="wrap_content"
@@ -55,51 +66,57 @@
         android:layout_toRightOf="@id/button2"
         android:layout_alignBottom="@id/button1"/>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="Service Text"
-        android:id="@+id/textView2"
-        android:layout_below="@id/textView1"
-        android:textColor="@color/green"
-        android:textSize="30dp"/>
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Start Server"
         android:id="@+id/button4"
-        android:layout_below="@id/button1"/>
+        android:layout_alignTop="@+id/button3"
+        android:layout_toRightOf="@+id/button3"
+        android:layout_toEndOf="@+id/button3" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Start Preview"
         android:id="@+id/button5"
-        android:layout_above="@+id/previewFrame" />
-
-    <FrameLayout
-        android:layout_width="144dp"
-        android:layout_height="176dp"
-        android:id="@+id/previewFrame"
-        android:layout_alignParentBottom="true"
-        />
-
-    <ImageView
-        android:layout_width="144dp"
-        android:layout_height="176dp"
-        android:id="@+id/imageView2"
-        android:layout_alignTop="@+id/previewFrame"
-        android:layout_toRightOf="@+id/previewFrame"
-        android:layout_toEndOf="@+id/previewFrame" />
+        android:layout_alignTop="@+id/button4"
+        android:layout_toRightOf="@+id/button4"
+        android:layout_toEndOf="@+id/button4" />
 
     <Spinner
         android:layout_width="300dp"
         android:layout_height="50dp"
         android:id="@+id/spinner"
-        android:layout_below="@+id/editText"
-        android:spinnerMode="dropdown" />
+        android:spinnerMode="dropdown"
+        android:layout_alignBottom="@+id/button5"
+        android:layout_toRightOf="@+id/button5"
+        android:layout_toEndOf="@+id/button5" />
+
+    <GridLayout
+        android:layout_width="800dp"
+        android:layout_height="400dp"
+        android:layout_above="@+id/button1"
+        android:layout_alignParentLeft="true"
+        android:layout_marginBottom="60dp">
+
+        <FrameLayout
+            android:layout_width="352dp"
+            android:layout_height="288dp"
+            android:id="@+id/previewFrame"
+            android:layout_row="1"
+            android:layout_column="0"
+            android:layout_gravity="center"/>
+
+        <ImageView
+            android:layout_width="352dp"
+            android:layout_height="288dp"
+            android:id="@+id/imageView2"
+            android:layout_row="1"
+            android:layout_column="1"
+            android:layout_gravity="center"/>
+    </GridLayout>
 
 
 </RelativeLayout>

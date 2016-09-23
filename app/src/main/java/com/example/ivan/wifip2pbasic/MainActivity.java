@@ -127,10 +127,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         mPreview.callHandler(new Handler(){
 
             public void handleMessage(Message msg){
-                if (activeTransfer==false){
-                    pictureData =(byte[]) msg.obj;
-                    sendData();
-                }
+                pictureData =(byte[]) msg.obj;
+                sendData();
             }
 
         });
@@ -203,10 +201,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         button3.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                /*
-                sendData = editText1.getText().toString();
-                sendData();
-                */
+                Log.d("NEUTRAL","Button clicked");
             }
         });
 
@@ -214,6 +209,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         button4.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
+
+                //============================START SERVER============================
+                text1.setText("Server Started");
                 startServer();
             }
         });
@@ -222,6 +220,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         button5.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 try{
                     frame1.addView(mPreview);
                 }catch(RuntimeException e){
@@ -230,7 +229,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                     return;
                 }
             }
+
+
         });
+
     }
 
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -241,6 +243,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     @Override
     public void onNothingSelected(AdapterView<?> arg0) {
         // TODO Auto-generated method stub
+
     }
 
     @Override
@@ -296,6 +299,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
             else
             {
                 //Launch Client Service
+                Log.d("NEUTRAL","Main Activity: launching client service");
                 clientServiceIntent = new Intent(this, ClientService.class);
                 clientServiceIntent.putExtra("port",new Integer(port));
                 clientServiceIntent.putExtra("wifiInfo",wifiP2pInfo);
@@ -307,20 +311,29 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                         if(resultCode == port){
 
                             if(resultData==null){
+
+                                Log.d("NEUTRAL","Main Activity: client result received");
                                 activeTransfer=false;
 
                             }else{
+                                //Receives updates from the Service class and provides status on the UI
                                 final TextView client_status_text= (TextView) findViewById(R.id.textView2);
                                 client_status_text.post(new Runnable() {
                                     @Override
                                     public void run() {
                                         client_status_text.setText((String)resultData.get("message"));
                                     }
+
                                 });
+
                             }
+
                         }
                     }
+
+
                 });
+
                 activeTransfer = true;
                 this.startService(clientServiceIntent);
             }
@@ -336,36 +349,48 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
 
             serverServiceIntent = new Intent(this, ServerService.class);
             serverServiceIntent.putExtra("port", new Integer(port));
-            serverServiceIntent.putExtra("checkStatus", imageProcessing);
+            serverServiceIntent.putExtra("imageProcessing", imageProcessing);
             serverServiceIntent.putExtra("serverResult", new ResultReceiver(null){
                 @Override
                 protected void onReceiveResult(int resultCode, final Bundle resultData){
 
                     if(resultCode==port){
+                    Log.d("NEUTRAL","Received server results");
 
                         if(resultData==null){
                             serverStatus=false;
                             Log.d("NEUTRAL", "Main Activity: Server Stopped");
                         }else{
 
-                            receivePData = (byte[])resultData.get("pictureData");
-                            count = receivePData.length;
+                            if( imageProcessing==false){
 
-                            if(count>1500 && imageProcessing==false){
+                                imageProcessing = true;
+                                serverServiceIntent.putExtra("imageProcessing", imageProcessing);
+
                                 imageview.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        imageProcessing = true;
-                                        serverServiceIntent.putExtra("checkStatus", imageProcessing);
-                                        bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
-                                        imageview.setImageBitmap(bmpout);
+                                        Log.d("NEUTRAL","Processing Frame");
+
+                                        receivePData = (byte[])resultData.get("pictureData");
+                                        count = receivePData.length;
+                                        if (count>1500){
+                                            //Log.d("NEUTRAL","Count Value: " + count);
+                                            bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
+                                            imageview.setImageBitmap(bmpout);
+                                        }
                                         imageProcessing = false;
-                                        serverServiceIntent.putExtra("checkStatus", imageProcessing);
+                                        serverServiceIntent.putExtra("imageProcessing", imageProcessing);
+
                                     }
                                 });
+
                             }
+
                         }
+
                     }
+
                 }
             });
 

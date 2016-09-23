@@ -27,7 +27,7 @@ public class ServerService extends IntentService {
     private int port;
     private ResultReceiver serverResult;
     private byte[] pictureData;
-    private boolean checkStatus = false;
+    private boolean imageProcessing = false;
 
     public ServerService() {
         super("ServerService");
@@ -46,41 +46,46 @@ public class ServerService extends IntentService {
         Socket socket = null;
 
         try{
-            checkStatus = (Boolean) intent.getExtras().get("checkStatus");
 
-            if (checkStatus==false){
-                checkStatus=true;
                 welcomeSocket = new ServerSocket(port);
                 while(serviceEnabled){
+                    Log.d("NEUTRAL", "Sever Reading");
+                    //checkStatus = (Boolean) intent.getExtras().get("checkStatus");
+
                     socket = welcomeSocket.accept();
                     InputStream is = socket.getInputStream();
                     InputStreamReader isr = new InputStreamReader(is);
-                    BufferedReader br = new BufferedReader(isr);
-                    OutputStream os = socket.getOutputStream();
-                    PrintWriter pw = new PrintWriter(os);
 
                     //Receive Data
                     Integer length = is.available();
                     byte[] buffer = new byte[length];
                     is.read(buffer);
-                    pictureData=buffer;
+                    pictureData = buffer;
 
                     //Complete method
-                    signalActivity();
+                    imageProcessing= (Boolean) intent.getExtras().get("imageProcessing");
+                    if (imageProcessing==false){
+                        Log.d("NEUTRAL", "Signal Activity");
+                        signalActivity();
+                    }
                     socket.close();
-                }
-            }
+                    //Log.d("NEUTRAL","Data Transfer Completed");
 
+
+                }
         }catch(IOException e){
             Log.d("NEUTRAL", e.getMessage());
         }catch(Exception e){
             Log.d("NEUTRAL", e.getMessage());
         }
+        //serverResult.send(port,null);
     }
 
     public void signalActivity(){
 
+        //Log.d("NEUTRAL", "Signal Activity");
         Bundle b = new Bundle();
+        //b.putString("message",message);
         b.putByteArray("pictureData", pictureData);
         serverResult.send(port,b);
 
