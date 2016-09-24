@@ -176,22 +176,22 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
             @Override
             public void onClick(View v) {
 
-                if (validPeers==true){
-                    config.wps.setup = WpsInfo.PBC;
-                    config.groupOwnerIntent = 15;
-                    config.deviceAddress = peers.get(peerSelected).deviceAddress;
-                    mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
-                        @Override
-                        public void onSuccess() {
-                            Log.d("NEUTRAL","Connection successful");
-                        }
+            if (validPeers==true){
+                config.wps.setup = WpsInfo.PBC;
+                config.groupOwnerIntent = 15;
+                config.deviceAddress = peers.get(peerSelected).deviceAddress;
+                mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        Log.d("NEUTRAL","Connection successful");
+                    }
 
-                        @Override
-                        public void onFailure(int reason) {
-                            Log.d("NEUTRAL","Connection failed");
-                        }
-                    });
-                }
+                    @Override
+                    public void onFailure(int reason) {
+                        Log.d("NEUTRAL","Connection failed");
+                    }
+                });
+            }
 
 
             }
@@ -209,7 +209,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         button4.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-
                 //============================START SERVER============================
                 text1.setText("Server Started");
                 startServer();
@@ -220,7 +219,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         button5.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                /*
                 try{
                     frame1.addView(mPreview);
                 }catch(RuntimeException e){
@@ -228,6 +227,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                     System.err.println(e);
                     return;
                 }
+                */
             }
 
 
@@ -260,7 +260,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
 
     @Override
     public void onPeersAvailable(WifiP2pDeviceList peerList){
-        Log.d("NEUTRAL","Main Activity: Listener");
+        //Log.d("NEUTRAL","Main Activity: Listener");
         peers.clear();
         peers.addAll(peerList.getDeviceList());
         validPeers = true;
@@ -355,37 +355,40 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                 protected void onReceiveResult(int resultCode, final Bundle resultData){
 
                     if(resultCode==port){
-                    Log.d("NEUTRAL","Received server results");
+                    //Log.d("NEUTRAL","Received server results");
 
                         if(resultData==null){
                             serverStatus=false;
                             Log.d("NEUTRAL", "Main Activity: Server Stopped");
                         }else{
 
-                            if( imageProcessing==false){
+                            imageProcessing = true;
+                            serverServiceIntent.putExtra("imageProcessing", imageProcessing);
 
-                                imageProcessing = true;
-                                serverServiceIntent.putExtra("imageProcessing", imageProcessing);
+                            imageview.post(new Runnable() {
+                                @Override
+                                public void run() {
 
-                                imageview.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Log.d("NEUTRAL","Processing Frame");
-
-                                        receivePData = (byte[])resultData.get("pictureData");
-                                        count = receivePData.length;
-                                        if (count>1500){
-                                            //Log.d("NEUTRAL","Count Value: " + count);
-                                            bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
+                                    receivePData = (byte[])resultData.get("pictureData");
+                                    count = receivePData.length;
+                                    //Log.d("NEUTRAL","Processing Frame: " + count);
+                                    if (count>2000){
+                                        //Log.d("NEUTRAL","Count Value: " + count);
+                                        bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
+                                        if (bmpout==null){
+                                            Log.d("NEUTRAL","Bitmap null");
+                                        }else{
                                             imageview.setImageBitmap(bmpout);
                                         }
-                                        imageProcessing = false;
-                                        serverServiceIntent.putExtra("imageProcessing", imageProcessing);
 
                                     }
-                                });
+                                    imageProcessing = false;
+                                    serverServiceIntent.putExtra("imageProcessing", imageProcessing);
 
-                            }
+                                }
+                            });
+
+
 
                         }
 

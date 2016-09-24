@@ -42,37 +42,37 @@ public class ServerService extends IntentService {
         port= ((Integer) intent.getExtras().get("port")).intValue();
         serverResult = (ResultReceiver) intent.getExtras().get("serverResult");
 
+
         ServerSocket welcomeSocket = null;
         Socket socket = null;
 
         try{
+            welcomeSocket = new ServerSocket(port);
+            while(serviceEnabled){
+                //checkStatus = (Boolean) intent.getExtras().get("checkStatus");
 
-                welcomeSocket = new ServerSocket(port);
-                while(serviceEnabled){
-                    Log.d("NEUTRAL", "Sever Reading");
-                    //checkStatus = (Boolean) intent.getExtras().get("checkStatus");
+                socket = welcomeSocket.accept();
+                InputStream is = socket.getInputStream();
+                InputStreamReader isr = new InputStreamReader(is);
 
-                    socket = welcomeSocket.accept();
-                    InputStream is = socket.getInputStream();
-                    InputStreamReader isr = new InputStreamReader(is);
+                //Receive Data
+                Integer length = is.available();
+                byte[] buffer = new byte[length];
+                is.read(buffer);
 
-                    //Receive Data
-                    Integer length = is.available();
-                    byte[] buffer = new byte[length];
-                    is.read(buffer);
+                //Complete method
+                imageProcessing= (Boolean) intent.getExtras().get("imageProcessing");
+                if (imageProcessing==false){
                     pictureData = buffer;
 
-                    //Complete method
-                    imageProcessing= (Boolean) intent.getExtras().get("imageProcessing");
-                    if (imageProcessing==false){
-                        Log.d("NEUTRAL", "Signal Activity");
-                        signalActivity();
-                    }
-                    socket.close();
-                    //Log.d("NEUTRAL","Data Transfer Completed");
-
-
+                    //Log.d("NEUTRAL", "Signal Activity: " + pictureData.length);
+                    signalActivity();
                 }
+                socket.close();
+                //Log.d("NEUTRAL","Data Transfer Completed");
+            }
+
+
         }catch(IOException e){
             Log.d("NEUTRAL", e.getMessage());
         }catch(Exception e){
@@ -85,7 +85,6 @@ public class ServerService extends IntentService {
 
         //Log.d("NEUTRAL", "Signal Activity");
         Bundle b = new Bundle();
-        //b.putString("message",message);
         b.putByteArray("pictureData", pictureData);
         serverResult.send(port,b);
 
