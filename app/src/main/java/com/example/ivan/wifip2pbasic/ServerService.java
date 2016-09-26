@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 
 /**
  * Created by ivan on 07/07/16.
@@ -49,49 +50,101 @@ public class ServerService extends IntentService {
         try{
             welcomeSocket = new ServerSocket(port);
             while(serviceEnabled){
-                //checkStatus = (Boolean) intent.getExtras().get("checkStatus");
 
+                //STANDARD OPENING CODES
                 socket = welcomeSocket.accept();
                 InputStream is = socket.getInputStream();
                 InputStreamReader isr = new InputStreamReader(is);
 
+                //DIRECT READ METHOD
                 //Receive Data
                 Integer length = is.available();
                 byte[] buffer = new byte[length];
                 is.read(buffer);
-
-                //Complete method
                 imageProcessing= (Boolean) intent.getExtras().get("imageProcessing");
                 if (imageProcessing==false){
                     pictureData = buffer;
-
-                    //Log.d("NEUTRAL", "Signal Activity: " + pictureData.length);
                     signalActivity();
                 }
                 socket.close();
-                //Log.d("NEUTRAL","Data Transfer Completed");
+
+
+                //METHOD 2 - Fixed length
+                /*
+                //imageProcessing= (Boolean) intent.getExtras().get("imageProcessing");
+                //Log.d("NEUTRAL","Looping");
+                //if (imageProcessing==false){
+                //Log.d("NEUTRAL","Image Processing = False");
+                int byteSize = 4052;
+                byte[] buffer = new byte[byteSize];
+                //Log.d("NEUTRAL","AVailable bytes: " + is.available());
+
+                //if (is.available()>=byteSize){
+
+                is.read(buffer,0,byteSize);
+
+                byte [] pLen = new byte[4];
+                for (int i=0; i < 4; i++){
+                    pLen[i]=buffer[i];
+                }
+                int picLen = byteArrayToInt(pLen);
+                Log.d("NEUTRAL","Server: Picture Length Received: " + picLen);
+                if (picLen>0){
+                    Log.d("NEUTRAL","Server: Process Input stream");
+                    pictureData = new byte[picLen];
+                    for (int i=4; i < picLen + 4; i++){
+                        pictureData[i-4] = buffer[i];
+                    }
+                    signalActivity();
+                }
+                //Log.d("NEUTRAL","Retrieved Picture Length: " + picLen);
+                //}
+
+                //}
+                socket.close();
+                */
             }
 
 
         }catch(IOException e){
-            Log.d("NEUTRAL", e.getMessage());
+            Log.d("NEUTRAL", "Sever Service IO Exception Error: " + e.getMessage());
         }catch(Exception e){
-            Log.d("NEUTRAL", e.getMessage());
+            Log.d("NEUTRAL", "Server Service Errror: " + e.getMessage());
         }
-        //serverResult.send(port,null);
     }
 
     public void signalActivity(){
-
-        //Log.d("NEUTRAL", "Signal Activity");
         Bundle b = new Bundle();
         b.putByteArray("pictureData", pictureData);
         serverResult.send(port,b);
-
     }
 
     public void onDestroy(){
         serviceEnabled=false;
         stopSelf();
     }
+
+    public static byte[][] divideArray(byte[] source, int chunksize) {
+
+
+        byte[][] ret = new byte[(int)Math.ceil(source.length / (double)chunksize)][chunksize];
+
+        int start = 0;
+
+        for(int i = 0; i < ret.length; i++) {
+            ret[i] = Arrays.copyOfRange(source,start, start + chunksize);
+            start += chunksize ;
+        }
+
+        return ret;
+    }
+
+    public static int byteArrayToInt(byte[] b)
+    {
+        return   b[3] & 0xFF |
+                (b[2] & 0xFF) << 8 |
+                (b[1] & 0xFF) << 16 |
+                (b[0] & 0xFF) << 24;
+    }
+
 }

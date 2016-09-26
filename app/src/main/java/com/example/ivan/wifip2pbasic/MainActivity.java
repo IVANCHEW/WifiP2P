@@ -73,13 +73,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
 
     Camera mainCamera;
     Preview mPreview;
-    public byte[] pictureData, receivePData;
-    Bitmap bmpout, rbmpout;
+    public byte[] receivePData;
+    Bitmap bmpout;
     ImageView imageview;
-    Matrix matrix = new Matrix();
     Boolean imageProcessing=false;
 
     int count =0 ;
+    int count2 = 0;
     int nserver=0;
 
     @Override
@@ -114,6 +114,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         spinner1.setOnItemSelectedListener(this);
 
         //====================================INITIATE THE CAMERA=================================
+        /*
         try{
             mainCamera= Camera.open();
         }catch(Exception e){
@@ -132,6 +133,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
             }
 
         });
+        */
 
         //====================================INITIATE WIFI DIRECT====================================
         mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener(){
@@ -285,6 +287,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         transferReadyState=status;
     }
 
+    /*
     public void sendData(){
 
         if(activeTransfer==false){
@@ -342,6 +345,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
             Log.d("NEUTRAL","Cannot Send Data");
         }
     }
+    */
 
     public void startServer(){
 
@@ -364,50 +368,38 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
 
                             imageProcessing = true;
                             serverServiceIntent.putExtra("imageProcessing", imageProcessing);
+                            count2 = count2 + 1;
+                            Log.d("NEUTRAL", "Frame Count = " + count2);
 
                             imageview.post(new Runnable() {
                                 @Override
                                 public void run() {
-
+                                    bmpout = null;
                                     receivePData = (byte[])resultData.get("pictureData");
-                                    count = receivePData.length;
-                                    //Log.d("NEUTRAL","Processing Frame: " + count);
-                                    if (count>2000){
-                                        //Log.d("NEUTRAL","Count Value: " + count);
-                                        bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
-                                        if (bmpout==null){
-                                            Log.d("NEUTRAL","Bitmap null");
-                                        }else{
-                                            imageview.setImageBitmap(bmpout);
-                                        }
-
+                                    Log.d("NEUTRAL","Image: Process Image with length: " + receivePData.length);
+                                    //count = receivePData.length;
+                                    //Log.d("NEUTRAL","Count Value: " + count);
+                                    bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
+                                    if (bmpout==null){
+                                        count = count + 1;
+                                        Log.d("NEUTRAL","image: Bitmap null : " + count);
+                                    }else{
+                                        imageview.setImageBitmap(bmpout);
                                     }
                                     imageProcessing = false;
                                     serverServiceIntent.putExtra("imageProcessing", imageProcessing);
-
                                 }
                             });
-
-
-
                         }
-
                     }
-
                 }
             });
-
             serverStatus=true;
             startService(serverServiceIntent);
-
             Log.d("NEUTRAL","Main Activity: Server Running");
-
-
         }else
         {
             Log.d("NEUTRAL","Server Already Running");
         }
-
     }
-
 }
