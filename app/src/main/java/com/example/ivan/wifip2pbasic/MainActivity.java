@@ -10,6 +10,9 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
@@ -53,7 +56,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
 
     IntentFilter mIntentFilter;
 
-    Button button1, button2, button3, button4, button5;
+    Button button1, button2, button3, button4, button5, button6, button7;
     EditText editText1;
     FrameLayout frame1;
     TextView text1, text2;
@@ -82,6 +85,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     int count2 = 0;
     int nserver=0;
 
+    //Audio Test
+    private int sampleRate = 8000;
+    private int channelConfig = AudioFormat.CHANNEL_CONFIGURATION_MONO;
+    private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+    private AudioTrack speaker;
+    int minBufSize = 1026;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -102,6 +112,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         button3 = (Button)findViewById(R.id.button3);
         button4 = (Button)findViewById(R.id.button4);
         button5= (Button)findViewById(R.id.button5);
+        button6 = (Button)findViewById(R.id.button6);
+        button7 = (Button)findViewById(R.id.button7);
         text1 = (TextView)findViewById(R.id.textView1);
         frame1= (FrameLayout)findViewById(R.id.previewFrame);
         editText1 = (EditText)findViewById(R.id.editText);
@@ -235,6 +247,26 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
 
         });
 
+        //AUDIO FEATURES
+        button6.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                text1.setText("Server Started");
+                startServer();
+                speaker = new AudioTrack(AudioManager.STREAM_MUSIC,sampleRate,channelConfig,audioFormat,minBufSize, AudioTrack.MODE_STREAM);
+                speaker.play();
+                Log.d("NEUTRAL", "Speaker initialized");
+            }
+        });
+
+        button7.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                speaker.release();
+                Log.d("NEUTRAL","Speakers Released");
+            }
+        });
+
     }
 
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -365,7 +397,14 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                             serverStatus=false;
                             Log.d("NEUTRAL", "Main Activity: Server Stopped");
                         }else{
+                            //Audio Test
 
+                            receivePData = (byte[])resultData.get("pictureData");
+                            speaker.write(receivePData, 0, receivePData.length);
+                            Log.d("NEUTRAL","Package Wrote to speaker");
+
+
+                            /*
                             imageProcessing = true;
                             serverServiceIntent.putExtra("imageProcessing", imageProcessing);
                             count2 = count2 + 1;
@@ -390,6 +429,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                                     serverServiceIntent.putExtra("imageProcessing", imageProcessing);
                                 }
                             });
+                            */
+
                         }
                     }
                 }

@@ -60,13 +60,29 @@ public class ServerService extends IntentService {
                 //Receive Data
                 Integer length = is.available();
                 byte[] buffer = new byte[length];
-                is.read(buffer);
+
+                if (is.available()>=1026) {
+                    is.read(buffer,0,1026);
+                }
+
+
+
                 imageProcessing= (Boolean) intent.getExtras().get("imageProcessing");
+
                 if (imageProcessing==false){
                     pictureData = buffer;
                     signalActivity();
                 }
+
                 socket.close();
+
+                //Audio Test
+                /*
+                pictureData = buffer;
+                signalActivity();
+
+                socket.close();
+                */
 
 
                 //METHOD 2 - Fixed length
