@@ -61,6 +61,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     FrameLayout frame1;
     TextView text1, text2;
     Boolean validPeers = false;
+    Boolean streamAlternate = false;
 
     WifiP2pInfo wifiP2pInfo;
     WifiP2pDevice targetDevice;
@@ -86,10 +87,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     int nserver=0;
 
     //Audio Test
+    private AudioTrack speaker;
     private int sampleRate = 8000;
     private int channelConfig = AudioFormat.CHANNEL_CONFIGURATION_MONO;
     private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-    private AudioTrack speaker;
     int minBufSize = 1026;
 
     @Override
@@ -397,39 +398,45 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                             serverStatus=false;
                             Log.d("NEUTRAL", "Main Activity: Server Stopped");
                         }else{
-                            //Audio Test
 
-                            receivePData = (byte[])resultData.get("pictureData");
-                            speaker.write(receivePData, 0, receivePData.length);
-                            Log.d("NEUTRAL","Package Wrote to speaker");
-
-
-                            /*
                             imageProcessing = true;
                             serverServiceIntent.putExtra("imageProcessing", imageProcessing);
-                            count2 = count2 + 1;
-                            Log.d("NEUTRAL", "Frame Count = " + count2);
 
-                            imageview.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    bmpout = null;
-                                    receivePData = (byte[])resultData.get("pictureData");
-                                    Log.d("NEUTRAL","Image: Process Image with length: " + receivePData.length);
-                                    //count = receivePData.length;
-                                    //Log.d("NEUTRAL","Count Value: " + count);
-                                    bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
-                                    if (bmpout==null){
-                                        count = count + 1;
-                                        Log.d("NEUTRAL","image: Bitmap null : " + count);
-                                    }else{
-                                        imageview.setImageBitmap(bmpout);
+                            if(streamAlternate==false){
+                                imageview.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        bmpout = null;
+                                        receivePData = (byte[])resultData.get("streamData");
+                                        Log.d("NEUTRAL","Image: Process Image with length: " + receivePData.length);
+                                        //count = receivePData.length;
+                                        //Log.d("NEUTRAL","Count Value: " + count);
+                                        bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
+                                        count2 = count2 + 1;
+                                        Log.d("NEUTRAL", "Frame Count = " + count2);
+
+                                        if (bmpout==null){
+                                            count = count + 1;
+                                            Log.d("NEUTRAL","image: Bitmap null : " + count);
+                                        }else{
+                                            imageview.setImageBitmap(bmpout);
+                                        }
+                                        imageProcessing = false;
+                                        serverServiceIntent.putExtra("imageProcessing", imageProcessing);
                                     }
-                                    imageProcessing = false;
-                                    serverServiceIntent.putExtra("imageProcessing", imageProcessing);
-                                }
-                            });
-                            */
+                                });
+                                streamAlternate = true;
+                            }else{
+                                receivePData = (byte[])resultData.get("streamData");
+                                speaker.write(receivePData, 0, receivePData.length);
+                                Log.d("NEUTRAL","Package Wrote to speaker");
+                                streamAlternate = false;
+
+                                imageProcessing = false;
+                                serverServiceIntent.putExtra("imageProcessing", imageProcessing);
+                            }
+
+
 
                         }
                     }

@@ -9,9 +9,11 @@ import android.os.ResultReceiver;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -27,7 +29,7 @@ public class ServerService extends IntentService {
 
     private int port;
     private ResultReceiver serverResult;
-    private byte[] pictureData;
+    private byte[] streamData;
     private boolean imageProcessing = false;
 
     public ServerService() {
@@ -43,7 +45,6 @@ public class ServerService extends IntentService {
         port= ((Integer) intent.getExtras().get("port")).intValue();
         serverResult = (ResultReceiver) intent.getExtras().get("serverResult");
 
-
         ServerSocket welcomeSocket = null;
         Socket socket = null;
 
@@ -54,23 +55,21 @@ public class ServerService extends IntentService {
                 //STANDARD OPENING CODES
                 socket = welcomeSocket.accept();
                 InputStream is = socket.getInputStream();
-                InputStreamReader isr = new InputStreamReader(is);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-                //DIRECT READ METHOD
-                //Receive Data
-                Integer length = is.available();
-                byte[] buffer = new byte[length];
-
-                if (is.available()>=1026) {
-                    is.read(buffer,0,1026);
+                byte[] buffer = new byte[1024];
+                int read = 0;
+                while ((read = is.read(buffer,0,buffer.length)) != - 1){
+                    baos.write(buffer,0,read);
                 }
 
-
+                baos.flush();
+                byte[] buffer2 = baos.toByteArray();
 
                 imageProcessing= (Boolean) intent.getExtras().get("imageProcessing");
 
                 if (imageProcessing==false){
-                    pictureData = buffer;
+                    streamData = buffer2;
                     signalActivity();
                 }
 
@@ -131,7 +130,7 @@ public class ServerService extends IntentService {
 
     public void signalActivity(){
         Bundle b = new Bundle();
-        b.putByteArray("pictureData", pictureData);
+        b.putByteArray("streamData", streamData);
         serverResult.send(port,b);
     }
 
