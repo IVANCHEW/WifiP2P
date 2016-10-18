@@ -91,7 +91,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     private int sampleRate = 8000;
     private int channelConfig = AudioFormat.CHANNEL_CONFIGURATION_MONO;
     private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-    int minBufSize = 1026;
+    int minBufSize = 1024;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -399,9 +399,40 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                             Log.d("NEUTRAL", "Main Activity: Server Stopped");
                         }else{
 
+
                             imageProcessing = true;
                             serverServiceIntent.putExtra("imageProcessing", imageProcessing);
+                            bmpout = null;
+                            receivePData = (byte[])resultData.get("streamData");
+                            Log.d("NEUTRAL","Steaming, Received byte array of length: " + receivePData.length);
+                            //Reading audio data
+                            speaker.write(receivePData, 0, minBufSize);
 
+                            imageview.post(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    //count = receivePData.length;
+                                    //Log.d("NEUTRAL","Count Value: " + count);
+
+                                    //Reading picture data
+                                    bmpout = BitmapFactory.decodeByteArray(receivePData, minBufSize, (receivePData.length-minBufSize));
+                                    count2 = count2 + 1;
+                                    Log.d("NEUTRAL", "Frame Count = " + count2);
+
+                                    if (bmpout==null){
+                                        count = count + 1;
+                                        Log.d("NEUTRAL","image: Bitmap null : " + count);
+                                    }else{
+                                        imageview.setImageBitmap(bmpout);
+                                    }
+                                    imageProcessing = false;
+                                    serverServiceIntent.putExtra("imageProcessing", imageProcessing);
+                                }
+                            });
+
+
+                            /*
                             if(streamAlternate==false){
                                 imageview.post(new Runnable() {
                                     @Override
@@ -435,8 +466,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                                 imageProcessing = false;
                                 serverServiceIntent.putExtra("imageProcessing", imageProcessing);
                             }
-
-
+                            */
 
                         }
                     }
