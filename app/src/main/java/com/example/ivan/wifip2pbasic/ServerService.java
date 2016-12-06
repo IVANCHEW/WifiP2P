@@ -100,7 +100,7 @@ public class ServerService extends IntentService {
 
                 byte [] pLen = new byte[4];
                 for (int i=0; i < 4; i++){
-                    pLen[i]=buffer[i];
+                    pLen[i]=buffer[i];///
                 }
                 int picLen = byteArrayToInt(pLen);
                 Log.d("NEUTRAL","Server: Picture Length Received: " + picLen);

@@ -91,7 +91,17 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     private int sampleRate = 8000;
     private int channelConfig = AudioFormat.CHANNEL_CONFIGURATION_MONO;
     private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-    int minBufSize = 1024;
+    int minBufSize = 1408;
+    //int minBufSize = 1024;
+    int audioCount=  0;
+    Runnable AP;
+    Boolean audioRunning = false;
+    Handler handleAudio = new Handler(){
+        @Override
+        public void handleMessage(Message msg){
+            audioRunning=false;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,34 +129,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         frame1= (FrameLayout)findViewById(R.id.previewFrame);
         editText1 = (EditText)findViewById(R.id.editText);
         imageview=(ImageView)findViewById(R.id.imageView2);
+        imageview.setScaleType(ImageView.ScaleType.FIT_XY);
 
         spinner1 = (Spinner)findViewById(R.id.spinner);
         spinnerArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, peerNames);
         spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner1.setAdapter(spinnerArrayAdapter);
         spinner1.setOnItemSelectedListener(this);
-
-        //====================================INITIATE THE CAMERA=================================
-        /*
-        try{
-            mainCamera= Camera.open();
-        }catch(Exception e){
-            Log.d("NEUTRAL","Error opening camera");
-        }
-
-        mPreview = new Preview(this, mainCamera);
-        matrix.postRotate(90);
-
-        //Define the handler to listen for messages from the Preview Class
-        mPreview.callHandler(new Handler(){
-
-            public void handleMessage(Message msg){
-                pictureData =(byte[]) msg.obj;
-                sendData();
-            }
-
-        });
-        */
 
         //====================================INITIATE WIFI DIRECT====================================
         mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener(){
@@ -163,14 +152,20 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         });
 
         //====================================INITATE BUTTONS====================================
+
         //UPDATE PEERS ON UI
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
+                Log.d("NEUTRAL", "Initiate Detect Peers");
+
+                mManager.requestPeers(mChannel,null);
+
                 peerNames.clear();
 
                 if (peers.size()>0){
+                    Log.d("NEUTRAL","Peers Discovered");
                     text1.setText("Peers Discovered");
                     int i = 0;
                     while(i<peers.size()){
@@ -178,10 +173,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                         i++;
                     }
                     spinner1.setAdapter(spinnerArrayAdapter);
+                    validPeers=true;
                 }
                 else
                 {
+                    Log.d("NEUTRAL","No Peers Available");
                     text1.setText("No Peers Available");
+                    validPeers=false;
                 }
             }
         });
@@ -192,71 +190,103 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
             public void onClick(View v) {
 
             if (validPeers==true){
-                config.wps.setup = WpsInfo.PBC;
-                config.groupOwnerIntent = 15;
-                config.deviceAddress = peers.get(peerSelected).deviceAddress;
-                mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
+
+                try {
+                    config.wps.setup = WpsInfo.PBC;
+                    config.groupOwnerIntent = 15;
+                    config.deviceAddress = peers.get(peerSelected).deviceAddress;
+                    mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
+                        @Override
+                        public void onSuccess() {
+                            Log.d("NEUTRAL", "Connection successful");
+                            try{
+                                startServer();
+                                Log.d("NEUTRAL","Server Started");
+                                speaker = new AudioTrack(AudioManager.STREAM_MUSIC,sampleRate,channelConfig,audioFormat,minBufSize, AudioTrack.MODE_STREAM);
+                                speaker.play();
+                                Log.d("NEUTRAL", "Speaker initialized");
+                                text1.setText("Server Started");
+                            }catch(Exception e){
+                                Log.d("NEUTRAL","Server and audio start error");
+                                Log.d("NEUTRAL",e.toString());
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(int reason) {
+                            Log.d("NEUTRAL", "Connection failed");
+                        }
+                    });
+                }catch(Exception e){
+                    Log.d("NEUTRAL","Peer connection attempted and failed");
+                    Log.d("NEUTRAL",e.toString());
+                }
+            }else{
+                Log.d("NEUTRAL", "No valid peers selected");
+            }
+            }
+        });
+
+        //=============STOP CONNECT
+        button3.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Log.d("NEUTRAL","Stop Connection intiated");
+                mManager.removeGroup(mChannel, new WifiP2pManager.ActionListener(){
                     @Override
                     public void onSuccess() {
-                        Log.d("NEUTRAL","Connection successful");
+                        try{
+                            //Undeclare available peers
+                            peerNames.clear();
+                            validPeers=false;
+                            Log.d("NEUTRAL","Peers cleared");
+
+                            //Uninitialise Services
+                            serverStatus=false;
+                            speaker.release();
+                        }catch(Exception e){
+                            Log.d("NEUTRAL",e.toString());
+                        }
+                        Log.d("NEUTRAL","Stop Connection successful");
                     }
 
                     @Override
                     public void onFailure(int reason) {
-                        Log.d("NEUTRAL","Connection failed");
+                        Log.d("NEUTRAL","Stop Connection failed");
                     }
                 });
             }
-
-
-            }
         });
 
-        //SEND DATA
-        button3.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                Log.d("NEUTRAL","Button clicked");
-            }
-        });
-
-        //START SERVER
+        //============START SERVER - NOT IN USE
         button4.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                //============================START SERVER============================
-                text1.setText("Server Started");
-                startServer();
             }
         });
 
-        //============START THE PREVIEW=================
+        //============START THE PREVIEW - NOT IN USE
         button5.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                /*
-                try{
-                    frame1.addView(mPreview);
-                }catch(RuntimeException e){
-                    Log.d("NEUTRAL","Error in OnCreate");
-                    System.err.println(e);
-                    return;
-                }
-                */
-            }
 
+            }
 
         });
 
-        //AUDIO FEATURES
+        //================START SERVER WITH AUDIO FEATURES - NOT IN USE
         button6.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
                 text1.setText("Server Started");
                 startServer();
+                Log.d("NEUTRAL","Server Started");
                 speaker = new AudioTrack(AudioManager.STREAM_MUSIC,sampleRate,channelConfig,audioFormat,minBufSize, AudioTrack.MODE_STREAM);
                 speaker.play();
                 Log.d("NEUTRAL", "Speaker initialized");
+                //AP = new audioPublisher(speaker, minBufSize);
+                //Log.d("NEUTRAL", "Audio class initialised");
+
             }
         });
 
@@ -316,69 +346,16 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         transferReadyState=status;
     }
 
+    public boolean writeAudio(){
+        AP = new audioPublisher(speaker, minBufSize, receivePData);
+        new Thread(AP).start();
+
+        return false;
+    }
+
     public void setNetworkToPendingState(boolean status){
         transferReadyState=status;
     }
-
-    /*
-    public void sendData(){
-
-        if(activeTransfer==false){
-
-            if(!transferReadyState){
-                Log.d("NEUTRAL","Error - Connection not ready");
-                text1.setText("Error - Connection not ready");
-            }else if(wifiP2pInfo==null){
-                Log.d("NEUTRAL","Error - Missing Wifi P2P Information");
-                text1.setText("Error - Missing Wifi P2P Information");
-            }
-            else
-            {
-                //Launch Client Service
-                Log.d("NEUTRAL","Main Activity: launching client service");
-                clientServiceIntent = new Intent(this, ClientService.class);
-                clientServiceIntent.putExtra("port",new Integer(port));
-                clientServiceIntent.putExtra("wifiInfo",wifiP2pInfo);
-                clientServiceIntent.putExtra("pictureData",pictureData);
-                clientServiceIntent.putExtra("clientResult", new ResultReceiver(null){
-
-                    @Override
-                    protected void onReceiveResult(int resultCode, final Bundle resultData){
-                        if(resultCode == port){
-
-                            if(resultData==null){
-
-                                Log.d("NEUTRAL","Main Activity: client result received");
-                                activeTransfer=false;
-
-                            }else{
-                                //Receives updates from the Service class and provides status on the UI
-                                final TextView client_status_text= (TextView) findViewById(R.id.textView2);
-                                client_status_text.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        client_status_text.setText((String)resultData.get("message"));
-                                    }
-
-                                });
-
-                            }
-
-                        }
-                    }
-
-
-                });
-
-                activeTransfer = true;
-                this.startService(clientServiceIntent);
-            }
-        }else
-        {
-            Log.d("NEUTRAL","Cannot Send Data");
-        }
-    }
-    */
 
     public void startServer(){
 
@@ -399,12 +376,12 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                             Log.d("NEUTRAL", "Main Activity: Server Stopped");
                         }else{
 
-
                             imageProcessing = true;
                             serverServiceIntent.putExtra("imageProcessing", imageProcessing);
                             bmpout = null;
                             receivePData = (byte[])resultData.get("streamData");
                             Log.d("NEUTRAL","Steaming, Received byte array of length: " + receivePData.length);
+
                             //Reading audio data
                             speaker.write(receivePData, 0, minBufSize);
 
@@ -430,43 +407,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                                     serverServiceIntent.putExtra("imageProcessing", imageProcessing);
                                 }
                             });
-
-
-                            /*
-                            if(streamAlternate==false){
-                                imageview.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        bmpout = null;
-                                        receivePData = (byte[])resultData.get("streamData");
-                                        Log.d("NEUTRAL","Image: Process Image with length: " + receivePData.length);
-                                        //count = receivePData.length;
-                                        //Log.d("NEUTRAL","Count Value: " + count);
-                                        bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
-                                        count2 = count2 + 1;
-                                        Log.d("NEUTRAL", "Frame Count = " + count2);
-
-                                        if (bmpout==null){
-                                            count = count + 1;
-                                            Log.d("NEUTRAL","image: Bitmap null : " + count);
-                                        }else{
-                                            imageview.setImageBitmap(bmpout);
-                                        }
-                                        imageProcessing = false;
-                                        serverServiceIntent.putExtra("imageProcessing", imageProcessing);
-                                    }
-                                });
-                                streamAlternate = true;
-                            }else{
-                                receivePData = (byte[])resultData.get("streamData");
-                                speaker.write(receivePData, 0, receivePData.length);
-                                Log.d("NEUTRAL","Package Wrote to speaker");
-                                streamAlternate = false;
-
-                                imageProcessing = false;
-                                serverServiceIntent.putExtra("imageProcessing", imageProcessing);
-                            }
-                            */
 
                         }
                     }

@@ -61,7 +61,7 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Send Data"
+        android:text="Stop Connection"
         android:id="@+id/button3"
         android:layout_toRightOf="@id/button2"
         android:layout_alignBottom="@id/button1"/>
@@ -95,8 +95,8 @@
         android:layout_toEndOf="@+id/button5" />
 
     <GridLayout
-        android:layout_width="800dp"
-        android:layout_height="400dp"
+        android:layout_width="1200dp"
+        android:layout_height="600dp"
         android:layout_above="@+id/button1"
         android:layout_alignParentLeft="true"
         android:layout_marginBottom="60dp">
@@ -110,8 +110,8 @@
             android:layout_gravity="center"/>
 
         <ImageView
-            android:layout_width="352dp"
-            android:layout_height="288dp"
+            android:layout_width="640dp"
+            android:layout_height="480dp"
             android:id="@+id/imageView2"
             android:layout_row="1"
             android:layout_column="1"
