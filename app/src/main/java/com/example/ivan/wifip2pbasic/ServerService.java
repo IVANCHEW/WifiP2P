@@ -4,6 +4,8 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.util.Log;
@@ -29,8 +31,17 @@ public class ServerService extends IntentService {
 
     private int port;
     private ResultReceiver serverResult;
-    private byte[] streamData;
+    //private byte[] streamData;
+    private byte[] pictureDataOut;
+    private byte[] audioDataOut;
     private boolean imageProcessing = false;
+
+    //Conversion of video data received
+    int width = 320;
+    int height = 240;
+    int previewFormat = 17;
+    //int minBufSize = 1408;
+    int minBufSize = 1024;
 
     public ServerService() {
         super("ServerService");
@@ -51,7 +62,7 @@ public class ServerService extends IntentService {
         try{
             welcomeSocket = new ServerSocket(port);
             while(serviceEnabled){
-
+                Log.d("NEUTRAL", "Server Service: Package Received");
                 //STANDARD OPENING CODES
                 socket = welcomeSocket.accept();
                 InputStream is = socket.getInputStream();
@@ -66,58 +77,29 @@ public class ServerService extends IntentService {
                 baos.flush();
                 byte[] buffer2 = baos.toByteArray();
 
+                byte[] audioData = Arrays.copyOfRange(buffer2, 0, minBufSize);
+
+                //Step 1: Data received in NV21 format, convert to YUV
+                //byte[] data = Arrays.copyOfRange(buffer2, minBufSize, (buffer2.length-minBufSize));
+                byte[] data = Arrays.copyOfRange(buffer2, minBufSize, buffer2.length);
+                YuvImage yuv = new YuvImage(data, previewFormat, width, height, null);
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                //Step 2: Convert YUV format to jpg
+                yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
+                byte[] bytes = out.toByteArray();
+
                 imageProcessing= (Boolean) intent.getExtras().get("imageProcessing");
 
                 if (imageProcessing==false){
-                    streamData = buffer2;
+                    Log.d("NEUTRAL", "Server Service: Package Sent to Main Activity");
+                    //streamData = buffer2;
+                    pictureDataOut = bytes;
+                    audioDataOut = audioData;
                     signalActivity();
                 }
 
                 socket.close();
 
-                //Audio Test
-                /*
-                pictureData = buffer;
-                signalActivity();
-
-                socket.close();
-                */
-
-
-                //METHOD 2 - Fixed length
-                /*
-                //imageProcessing= (Boolean) intent.getExtras().get("imageProcessing");
-                //Log.d("NEUTRAL","Looping");
-                //if (imageProcessing==false){
-                //Log.d("NEUTRAL","Image Processing = False");
-                int byteSize = 4052;
-                byte[] buffer = new byte[byteSize];
-                //Log.d("NEUTRAL","AVailable bytes: " + is.available());
-
-                //if (is.available()>=byteSize){
-
-                is.read(buffer,0,byteSize);
-
-                byte [] pLen = new byte[4];
-                for (int i=0; i < 4; i++){
-                    pLen[i]=buffer[i];///
-                }
-                int picLen = byteArrayToInt(pLen);
-                Log.d("NEUTRAL","Server: Picture Length Received: " + picLen);
-                if (picLen>0){
-                    Log.d("NEUTRAL","Server: Process Input stream");
-                    pictureData = new byte[picLen];
-                    for (int i=4; i < picLen + 4; i++){
-                        pictureData[i-4] = buffer[i];
-                    }
-                    signalActivity();
-                }
-                //Log.d("NEUTRAL","Retrieved Picture Length: " + picLen);
-                //}
-
-                //}
-                socket.close();
-                */
             }
 
 
@@ -130,7 +112,9 @@ public class ServerService extends IntentService {
 
     public void signalActivity(){
         Bundle b = new Bundle();
-        b.putByteArray("streamData", streamData);
+        //b.putByteArray("streamData", streamData);
+        b.putByteArray("audioData", audioDataOut);
+        b.putByteArray("pictureData", pictureDataOut);
         serverResult.send(port,b);
     }
 

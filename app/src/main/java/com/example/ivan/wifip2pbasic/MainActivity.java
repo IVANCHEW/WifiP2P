@@ -8,6 +8,8 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera;
 import android.media.AudioFormat;
@@ -36,7 +38,9 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends Activity implements OnItemSelectedListener, WifiP2pManager.PeerListListener{
@@ -77,7 +81,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
 
     Camera mainCamera;
     Preview mPreview;
-    public byte[] receivePData;
+    public byte[] receivePData, receiveAData;
     Bitmap bmpout;
     ImageView imageview;
     Boolean imageProcessing=false;
@@ -86,13 +90,21 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     int count2 = 0;
     int nserver=0;
 
+    //Conversion of video data received
+    /*
+    int width = 320;
+    int height = 240;
+    int previewFormat = 17;
+    */
+    //int minBufSize = 1408;
+    int minBufSize = 1024;
+
+
     //Audio Test
     private AudioTrack speaker;
     private int sampleRate = 8000;
     private int channelConfig = AudioFormat.CHANNEL_CONFIGURATION_MONO;
     private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-    int minBufSize = 1408;
-    //int minBufSize = 1024;
     int audioCount=  0;
     Runnable AP;
     Boolean audioRunning = false;
@@ -374,26 +386,38 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                         if(resultData==null){
                             serverStatus=false;
                             Log.d("NEUTRAL", "Main Activity: Server Stopped");
-                        }else{
+                        }else if(imageProcessing==false){
 
                             imageProcessing = true;
                             serverServiceIntent.putExtra("imageProcessing", imageProcessing);
                             bmpout = null;
-                            receivePData = (byte[])resultData.get("streamData");
-                            Log.d("NEUTRAL","Steaming, Received byte array of length: " + receivePData.length);
+                            receivePData = (byte[])resultData.get("pictureData");
+                            receiveAData = (byte[])resultData.get("audioData");
+                            //Log.d("NEUTRAL","Steaming, Received byte array of length: " + receivePData.length);
 
                             //Reading audio data
-                            speaker.write(receivePData, 0, minBufSize);
+                            //speaker.write(receivePData, 0, minBufSize);
+                            speaker.write(receiveAData,0,receiveAData.length);
+
+                            //Changed
 
                             imageview.post(new Runnable() {
                                 @Override
                                 public void run() {
 
-                                    //count = receivePData.length;
-                                    //Log.d("NEUTRAL","Count Value: " + count);
+                                    /*
+                                    //Step 1: Data received in NV21 format, convert to YUV
+                                    byte[] data = Arrays.copyOfRange(receivePData, minBufSize, (receivePData.length-minBufSize));
+                                    YuvImage yuv = new YuvImage(data, previewFormat, width, height, null);
+                                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                                    //Step 2: Convert YUV format to jpg
+                                    yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
+                                    byte[] bytes = out.toByteArray();
+                                    //Step 3: Convert from jpg to Bitmap for display
+                                    bmpout = BitmapFactory.decodeByteArray(bytes,0,bytes.length);
+                                    */
 
-                                    //Reading picture data
-                                    bmpout = BitmapFactory.decodeByteArray(receivePData, minBufSize, (receivePData.length-minBufSize));
+                                    bmpout = BitmapFactory.decodeByteArray(receivePData,0,receivePData.length);
                                     count2 = count2 + 1;
                                     Log.d("NEUTRAL", "Frame Count = " + count2);
 
@@ -420,4 +444,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
             Log.d("NEUTRAL","Server Already Running");
         }
     }
+
+
 }
