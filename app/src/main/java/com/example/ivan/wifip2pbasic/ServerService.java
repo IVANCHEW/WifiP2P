@@ -42,6 +42,7 @@ public class ServerService extends IntentService {
     int previewFormat = 17;
     //int minBufSize = 1408;
     int minBufSize = 1024;
+    //int minBufSize = 2048;
 
     public ServerService() {
         super("ServerService");

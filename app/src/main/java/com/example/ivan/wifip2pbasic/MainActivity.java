@@ -96,9 +96,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     int height = 240;
     int previewFormat = 17;
     */
-    //int minBufSize = 1408;
+    //int minBufSize = 2048;
     int minBufSize = 1024;
-
+    //int minBufSize = 4410;
 
     //Audio Test
     private AudioTrack speaker;
@@ -396,8 +396,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                             //Log.d("NEUTRAL","Steaming, Received byte array of length: " + receivePData.length);
 
                             //Reading audio data
-                            //speaker.write(receivePData, 0, minBufSize);
-                            speaker.write(receiveAData,0,receiveAData.length);
+                            startAudioWrite();
+                            //speaker.write(receiveAData,0,receiveAData.length);
 
                             //Changed
 
@@ -445,5 +445,25 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         }
     }
 
+    public void startAudioWrite(){
+        final Thread writeThread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+
+                    Log.d("NEUTRAL","Main Activity: Started Audio Write Thread");
+                    speaker.flush();
+                    speaker.write(receiveAData,0,receiveAData.length);
+
+                } catch (Exception e) {
+                    Log.d("NEUTRAL", "IOException: " + e.getMessage());
+                }
+
+            }
+
+        });
+        writeThread.start();
+    }
 
 }
