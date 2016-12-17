@@ -37,17 +37,18 @@ public class ServerService extends IntentService {
     private boolean imageProcessing = false;
 
     //Conversion of video data received
-    int width = 320;
-    int height = 240;
+    //int width = 320;
+    //int height = 240;
     int previewFormat = 17;
     //int minBufSize = 1408;
-    int minBufSize = 1024;
-    //int minBufSize = 2048;
+    //int minBufSize = 1024;
+    int minBufSize;
 
     public ServerService() {
         super("ServerService");
+
         serviceEnabled=true;
-        Log.d("NEUTRAL","Server Service Class: Class called");
+        Log.d("NEUTRAL", "Server Service Class: Class called");
     }
 
     @Override
@@ -56,6 +57,8 @@ public class ServerService extends IntentService {
         Log.d("NEUTRAL","Server Service Class: Intent received");
         port= ((Integer) intent.getExtras().get("port")).intValue();
         serverResult = (ResultReceiver) intent.getExtras().get("serverResult");
+        minBufSize = ((Integer) intent.getExtras().get("audiobuf")).intValue();
+        Log.d("NEUTRAL", "Audio buffer size of: " + minBufSize + " declared");
 
         ServerSocket welcomeSocket = null;
         Socket socket = null;
@@ -76,10 +79,14 @@ public class ServerService extends IntentService {
                 }
 
                 baos.flush();
+
                 byte[] buffer2 = baos.toByteArray();
+                Log.d("NEUTRAL","Length of data received: " + buffer2.length);
 
                 byte[] audioData = Arrays.copyOfRange(buffer2, 0, minBufSize);
+                byte[] bytes = Arrays.copyOfRange(buffer2, minBufSize, buffer2.length);
 
+                /*
                 //Step 1: Data received in NV21 format, convert to YUV
                 //byte[] data = Arrays.copyOfRange(buffer2, minBufSize, (buffer2.length-minBufSize));
                 byte[] data = Arrays.copyOfRange(buffer2, minBufSize, buffer2.length);
@@ -88,13 +95,17 @@ public class ServerService extends IntentService {
                 //Step 2: Convert YUV format to jpg
                 yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
                 byte[] bytes = out.toByteArray();
+                */
 
                 imageProcessing= (Boolean) intent.getExtras().get("imageProcessing");
 
                 if (imageProcessing==false){
                     Log.d("NEUTRAL", "Server Service: Package Sent to Main Activity");
+                    //Log.d("NEUTRAL","Length of audio: " + audioData.length);
+                    //Log.d("NEUTRAL","Length of picture: " + bytes.length);
                     //streamData = buffer2;
                     pictureDataOut = bytes;
+                    //pictureDataOut = buffer2;
                     audioDataOut = audioData;
                     signalActivity();
                 }

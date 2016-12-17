@@ -39,6 +39,9 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -82,7 +85,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     Camera mainCamera;
     Preview mPreview;
     public byte[] receivePData, receiveAData;
-    Bitmap bmpout;
+    Bitmap bmpout, bmpout2;
+    Matrix matrix = new Matrix();
     ImageView imageview;
     Boolean imageProcessing=false;
 
@@ -97,7 +101,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     int previewFormat = 17;
     */
     //int minBufSize = 2048;
-    int minBufSize = 1024;
+    int minBufSize = 1408;
     //int minBufSize = 4410;
 
     //Audio Test
@@ -148,6 +152,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner1.setAdapter(spinnerArrayAdapter);
         spinner1.setOnItemSelectedListener(this);
+        matrix.postRotate(180);
 
         //====================================INITIATE WIFI DIRECT====================================
         mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener(){
@@ -296,7 +301,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                 speaker = new AudioTrack(AudioManager.STREAM_MUSIC,sampleRate,channelConfig,audioFormat,minBufSize, AudioTrack.MODE_STREAM);
                 speaker.play();
                 Log.d("NEUTRAL", "Speaker initialized");
-                //AP = new audioPublisher(speaker, minBufSize);
                 //Log.d("NEUTRAL", "Audio class initialised");
 
             }
@@ -375,6 +379,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
 
             serverServiceIntent = new Intent(this, ServerService.class);
             serverServiceIntent.putExtra("port", new Integer(port));
+            serverServiceIntent.putExtra("audiobuf", new Integer(minBufSize));
             serverServiceIntent.putExtra("imageProcessing", imageProcessing);
             serverServiceIntent.putExtra("serverResult", new ResultReceiver(null){
                 @Override
@@ -397,27 +402,15 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
 
                             //Reading audio data
                             startAudioWrite();
-                            //speaker.write(receiveAData,0,receiveAData.length);
 
                             //Changed
-
                             imageview.post(new Runnable() {
                                 @Override
                                 public void run() {
 
-                                    /*
-                                    //Step 1: Data received in NV21 format, convert to YUV
-                                    byte[] data = Arrays.copyOfRange(receivePData, minBufSize, (receivePData.length-minBufSize));
-                                    YuvImage yuv = new YuvImage(data, previewFormat, width, height, null);
-                                    ByteArrayOutputStream out = new ByteArrayOutputStream();
-                                    //Step 2: Convert YUV format to jpg
-                                    yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
-                                    byte[] bytes = out.toByteArray();
-                                    //Step 3: Convert from jpg to Bitmap for display
-                                    bmpout = BitmapFactory.decodeByteArray(bytes,0,bytes.length);
-                                    */
-
                                     bmpout = BitmapFactory.decodeByteArray(receivePData,0,receivePData.length);
+                                    bmpout2 = Bitmap.createBitmap(bmpout, 0, 0, bmpout.getWidth(), bmpout.getHeight(), matrix, false);
+
                                     count2 = count2 + 1;
                                     Log.d("NEUTRAL", "Frame Count = " + count2);
 
@@ -425,7 +418,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                                         count = count + 1;
                                         Log.d("NEUTRAL","image: Bitmap null : " + count);
                                     }else{
-                                        imageview.setImageBitmap(bmpout);
+                                        imageview.setImageBitmap(bmpout2);
                                     }
                                     imageProcessing = false;
                                     serverServiceIntent.putExtra("imageProcessing", imageProcessing);
