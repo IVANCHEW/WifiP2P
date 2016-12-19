@@ -85,8 +85,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     Camera mainCamera;
     Preview mPreview;
     public byte[] receivePData, receiveAData;
-    Bitmap bmpout, bmpout2;
+    Bitmap bmpout, bmpout2, bmpout3;
     Matrix matrix = new Matrix();
+    Matrix matrix2 = new Matrix();
     ImageView imageview;
     Boolean imageProcessing=false;
 
@@ -153,6 +154,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         spinner1.setAdapter(spinnerArrayAdapter);
         spinner1.setOnItemSelectedListener(this);
         matrix.postRotate(180);
+        matrix2.preScale(-1, 1);
 
         //====================================INITIATE WIFI DIRECT====================================
         mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener(){
@@ -410,15 +412,17 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
 
                                     bmpout = BitmapFactory.decodeByteArray(receivePData,0,receivePData.length);
                                     bmpout2 = Bitmap.createBitmap(bmpout, 0, 0, bmpout.getWidth(), bmpout.getHeight(), matrix, false);
+                                    bmpout3 = Bitmap.createBitmap(bmpout2, 0, 0, bmpout2.getWidth(), bmpout2.getHeight(), matrix2, false);
 
                                     count2 = count2 + 1;
                                     Log.d("NEUTRAL", "Frame Count = " + count2);
+                                    Log.d("NEUTRAL", "Frame Width: " + bmpout3.getWidth() + " Frame Height: " + bmpout3.getHeight());
 
                                     if (bmpout==null){
                                         count = count + 1;
                                         Log.d("NEUTRAL","image: Bitmap null : " + count);
                                     }else{
-                                        imageview.setImageBitmap(bmpout2);
+                                        imageview.setImageBitmap(bmpout3);
                                     }
                                     imageProcessing = false;
                                     serverServiceIntent.putExtra("imageProcessing", imageProcessing);
