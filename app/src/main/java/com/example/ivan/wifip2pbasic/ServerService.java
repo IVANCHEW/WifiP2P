@@ -32,7 +32,7 @@ public class ServerService extends IntentService {
     private int port;
     private ResultReceiver serverResult;
     //private byte[] streamData;
-    private byte[] pictureDataOut;
+    //private byte[] pictureDataOut;
     private byte[] audioDataOut;
     private boolean imageProcessing = false;
 
@@ -83,30 +83,11 @@ public class ServerService extends IntentService {
                 byte[] buffer2 = baos.toByteArray();
                 Log.d("NEUTRAL","Length of data received: " + buffer2.length);
 
-                byte[] audioData = Arrays.copyOfRange(buffer2, 0, minBufSize);
-                byte[] bytes = Arrays.copyOfRange(buffer2, minBufSize, buffer2.length);
-
-                /*
-                //Step 1: Data received in NV21 format, convert to YUV
-                //byte[] data = Arrays.copyOfRange(buffer2, minBufSize, (buffer2.length-minBufSize));
-                byte[] data = Arrays.copyOfRange(buffer2, minBufSize, buffer2.length);
-                YuvImage yuv = new YuvImage(data, previewFormat, width, height, null);
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                //Step 2: Convert YUV format to jpg
-                yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
-                byte[] bytes = out.toByteArray();
-                */
-
                 imageProcessing= (Boolean) intent.getExtras().get("imageProcessing");
 
                 if (imageProcessing==false){
                     Log.d("NEUTRAL", "Server Service: Package Sent to Main Activity");
-                    //Log.d("NEUTRAL","Length of audio: " + audioData.length);
-                    //Log.d("NEUTRAL","Length of picture: " + bytes.length);
-                    //streamData = buffer2;
-                    pictureDataOut = bytes;
-                    //pictureDataOut = buffer2;
-                    audioDataOut = audioData;
+                    audioDataOut = buffer2;
                     signalActivity();
                 }
 
@@ -126,36 +107,13 @@ public class ServerService extends IntentService {
         Bundle b = new Bundle();
         //b.putByteArray("streamData", streamData);
         b.putByteArray("audioData", audioDataOut);
-        b.putByteArray("pictureData", pictureDataOut);
+        //b.putByteArray("pictureData", pictureDataOut);
         serverResult.send(port,b);
     }
 
     public void onDestroy(){
         serviceEnabled=false;
         stopSelf();
-    }
-
-    public static byte[][] divideArray(byte[] source, int chunksize) {
-
-
-        byte[][] ret = new byte[(int)Math.ceil(source.length / (double)chunksize)][chunksize];
-
-        int start = 0;
-
-        for(int i = 0; i < ret.length; i++) {
-            ret[i] = Arrays.copyOfRange(source,start, start + chunksize);
-            start += chunksize ;
-        }
-
-        return ret;
-    }
-
-    public static int byteArrayToInt(byte[] b)
-    {
-        return   b[3] & 0xFF |
-                (b[2] & 0xFF) << 8 |
-                (b[1] & 0xFF) << 16 |
-                (b[0] & 0xFF) << 24;
     }
 
 }

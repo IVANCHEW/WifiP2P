@@ -101,8 +101,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     int height = 240;
     int previewFormat = 17;
     */
-    //int minBufSize = 2048;
-    int minBufSize = 1408;
+    int minBufSize = 1024;
+    //int minBufSize = 1408;
     //int minBufSize = 4410;
 
     //Audio Test
@@ -398,37 +398,13 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                             imageProcessing = true;
                             serverServiceIntent.putExtra("imageProcessing", imageProcessing);
                             bmpout = null;
-                            receivePData = (byte[])resultData.get("pictureData");
+                            //receivePData = (byte[])resultData.get("pictureData");
                             receiveAData = (byte[])resultData.get("audioData");
                             //Log.d("NEUTRAL","Steaming, Received byte array of length: " + receivePData.length);
 
                             //Reading audio data
                             startAudioWrite();
-
-                            //Changed
-                            imageview.post(new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    bmpout = BitmapFactory.decodeByteArray(receivePData,0,receivePData.length);
-                                    bmpout2 = Bitmap.createBitmap(bmpout, 0, 0, bmpout.getWidth(), bmpout.getHeight(), matrix, false);
-                                    bmpout3 = Bitmap.createBitmap(bmpout2, 0, 0, bmpout2.getWidth(), bmpout2.getHeight(), matrix2, false);
-
-                                    count2 = count2 + 1;
-                                    Log.d("NEUTRAL", "Frame Count = " + count2);
-                                    Log.d("NEUTRAL", "Frame Width: " + bmpout3.getWidth() + " Frame Height: " + bmpout3.getHeight());
-
-                                    if (bmpout==null){
-                                        count = count + 1;
-                                        Log.d("NEUTRAL","image: Bitmap null : " + count);
-                                    }else{
-                                        imageview.setImageBitmap(bmpout3);
-                                    }
-                                    imageProcessing = false;
-                                    serverServiceIntent.putExtra("imageProcessing", imageProcessing);
-                                }
-                            });
-
+                            imageProcessing=false;
                         }
                     }
                 }
