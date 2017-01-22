@@ -69,6 +69,7 @@ public class ServerService extends IntentService {
                 Log.d("NEUTRAL", "Server Service: Package Received");
                 //STANDARD OPENING CODES
                 socket = welcomeSocket.accept();
+
                 InputStream is = socket.getInputStream();
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -83,8 +84,8 @@ public class ServerService extends IntentService {
                 byte[] buffer2 = baos.toByteArray();
                 Log.d("NEUTRAL","Length of data received: " + buffer2.length);
 
-                byte[] audioData = Arrays.copyOfRange(buffer2, 0, minBufSize);
-                byte[] bytes = Arrays.copyOfRange(buffer2, minBufSize, buffer2.length);
+                //byte[] audioData = Arrays.copyOfRange(buffer2, 0, minBufSize);
+                //byte[] bytes = Arrays.copyOfRange(buffer2, minBufSize, buffer2.length);
 
                 /*
                 //Step 1: Data received in NV21 format, convert to YUV
@@ -104,9 +105,9 @@ public class ServerService extends IntentService {
                     //Log.d("NEUTRAL","Length of audio: " + audioData.length);
                     //Log.d("NEUTRAL","Length of picture: " + bytes.length);
                     //streamData = buffer2;
-                    pictureDataOut = bytes;
-                    //pictureDataOut = buffer2;
-                    audioDataOut = audioData;
+                    //pictureDataOut = bytes;
+                    pictureDataOut = buffer2;
+                    //audioDataOut = audioData;
                     signalActivity();
                 }
 
@@ -125,7 +126,7 @@ public class ServerService extends IntentService {
     public void signalActivity(){
         Bundle b = new Bundle();
         //b.putByteArray("streamData", streamData);
-        b.putByteArray("audioData", audioDataOut);
+        //b.putByteArray("audioData", audioDataOut);
         b.putByteArray("pictureData", pictureDataOut);
         serverResult.send(port,b);
     }

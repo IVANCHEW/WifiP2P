@@ -102,8 +102,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     int previewFormat = 17;
     */
     //int minBufSize = 2048;
-    int minBufSize = 1408;
-    //int minBufSize = 4410;
+    //int minBufSize = 1408;
+    int minBufSize = 924;
 
     //Audio Test
     private AudioTrack speaker;
@@ -251,29 +251,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
             @Override
             public void onClick(View v){
                 Log.d("NEUTRAL","Stop Connection intiated");
-                mManager.removeGroup(mChannel, new WifiP2pManager.ActionListener(){
-                    @Override
-                    public void onSuccess() {
-                        try{
-                            //Undeclare available peers
-                            peerNames.clear();
-                            validPeers=false;
-                            Log.d("NEUTRAL","Peers cleared");
-
-                            //Uninitialise Services
-                            serverStatus=false;
-                            speaker.release();
-                        }catch(Exception e){
-                            Log.d("NEUTRAL",e.toString());
-                        }
-                        Log.d("NEUTRAL","Stop Connection successful");
-                    }
-
-                    @Override
-                    public void onFailure(int reason) {
-                        Log.d("NEUTRAL","Stop Connection failed");
-                    }
-                });
+                stopConnect();
             }
         });
 
@@ -312,7 +290,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
             @Override
             public void onClick(View v){
                 speaker.release();
-                Log.d("NEUTRAL","Speakers Released");
+                //Log.d("NEUTRAL","Speakers Released");
             }
         });
 
@@ -364,11 +342,35 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         transferReadyState=status;
     }
 
-    public boolean writeAudio(){
+    public void writeAudio(){
         AP = new audioPublisher(speaker, minBufSize, receivePData);
         new Thread(AP).start();
+    }
 
-        return false;
+    public void stopConnect(){
+        mManager.removeGroup(mChannel, new WifiP2pManager.ActionListener(){
+            @Override
+            public void onSuccess() {
+                try{
+                    //Undeclare available peers
+                    peerNames.clear();
+                    validPeers=false;
+                    Log.d("NEUTRAL","Peers cleared");
+
+                    //Uninitialise Services
+                    serverStatus=false;
+                    speaker.release();
+                }catch(Exception e){
+                    Log.d("NEUTRAL",e.toString());
+                }
+                //Log.d("NEUTRAL","Stop Connection successful");
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                Log.d("NEUTRAL","Stop Connection failed");
+            }
+        });
     }
 
     public void setNetworkToPendingState(boolean status){
@@ -403,9 +405,17 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                             //Log.d("NEUTRAL","Steaming, Received byte array of length: " + receivePData.length);
 
                             //Reading audio data
-                            startAudioWrite();
+                            //startAudioWrite();
+                            /*
+                            try{
+                                startAudioWrite();
+                            }catch(Exception e){
+                                Log.d("NEUTRAL E","Audio Write Exception Thrown: " + e.toString());
+                            }
+                            */
 
                             //Changed
+                            //startAudioWrite();
                             imageview.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -447,6 +457,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
 
             @Override
             public void run() {
+                Log.d("NEUTRAL","Main Activity: Started Audio Write Thread");
+                speaker.flush();
+                speaker.write(receiveAData,0,receiveAData.length);
+                /*
                 try {
 
                     Log.d("NEUTRAL","Main Activity: Started Audio Write Thread");
@@ -456,11 +470,20 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                 } catch (Exception e) {
                     Log.d("NEUTRAL", "IOException: " + e.getMessage());
                 }
+                */
 
             }
 
         });
+
         writeThread.start();
+        /*
+        try {
+            writeThread.start();
+        }catch(Exception e){
+            Log.d("NEUTRAL E", "Error caught within audio thread: " + e.toString());
+        }
+        */
     }
 
 }
