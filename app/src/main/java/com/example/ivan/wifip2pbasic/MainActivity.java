@@ -102,8 +102,8 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     int previewFormat = 17;
     */
     //int minBufSize = 2048;
-    int minBufSize = 1408;
-    //int minBufSize = 4410;
+    //int minBufSize = 1408;
+    int minBufSize = 2400;
 
     //Audio Test
     private AudioTrack speaker;
