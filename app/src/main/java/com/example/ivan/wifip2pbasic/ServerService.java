@@ -60,67 +60,109 @@ public class ServerService extends IntentService {
         minBufSize = ((Integer) intent.getExtras().get("audiobuf")).intValue();
         Log.d("NEUTRAL", "Audio buffer size of: " + minBufSize + " declared");
 
-        ServerSocket welcomeSocket = null;
+        ServerSocket serverSocket = null;
         Socket socket = null;
 
         try{
-            welcomeSocket = new ServerSocket(port);
-            while(serviceEnabled){
-                Log.d("NEUTRAL", "Server Service: Package Received");
-                //STANDARD OPENING CODES
-                socket = welcomeSocket.accept();
+            serverSocket = new ServerSocket(port);
+            serverSocket.setPerformancePreferences(0, 1, 1);
+            serverSocket.setReceiveBufferSize(1024*1024);
+            Log.d("NEUTRAL","Server Socket Buffer Size Set: " + serverSocket.getReceiveBufferSize());
+        }catch(IOException e) {
+            Log.d("NEUTRAL", "Sever Service IO Exception Error: " + e.getMessage());
+        }
 
+        //STANDARD OPENING CODES
+        try {
+            socket = serverSocket.accept();
+        }catch(IOException e) {
+            Log.d("NEUTRAL", "Sever Service IO Exception Error: " + e.getMessage());
+        }
+
+        while(serviceEnabled){
+
+            //Log.d("NEUTRAL", "Server Service: Package Received");
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            byte[] picture_length_buffer = new byte[4];
+            int read = 0;
+            int picture_length;
+            int marker = 0;
+
+            try{
                 InputStream is = socket.getInputStream();
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-                byte[] buffer = new byte[1024];
-                int read = 0;
-                while ((read = is.read(buffer,0,buffer.length)) != - 1){
+                is.read(picture_length_buffer, 0, 4);
+                picture_length = byteArrayToInt(picture_length_buffer);
+                //Log.d("NEUTRAL","Length Received: " + picture_length);
+
+                while (is.available() < picture_length){
+
+                }
+
+                while (marker < picture_length){
+
+                    if (picture_length - marker >= 1024){
+                        read = 1024;
+                    }else{
+                        read = picture_length - marker;
+                    }
+                    marker = marker + read;
+
+                    is.read(buffer,0,read);
                     baos.write(buffer,0,read);
+                    //Log.d("NEUTRAL", "Marker position: " + marker);
                 }
 
-                baos.flush();
 
-                byte[] buffer2 = baos.toByteArray();
-                Log.d("NEUTRAL","Length of data received: " + buffer2.length);
-
-                //byte[] audioData = Arrays.copyOfRange(buffer2, 0, minBufSize);
-                //byte[] bytes = Arrays.copyOfRange(buffer2, minBufSize, buffer2.length);
-
-                /*
-                //Step 1: Data received in NV21 format, convert to YUV
-                //byte[] data = Arrays.copyOfRange(buffer2, minBufSize, (buffer2.length-minBufSize));
-                byte[] data = Arrays.copyOfRange(buffer2, minBufSize, buffer2.length);
-                YuvImage yuv = new YuvImage(data, previewFormat, width, height, null);
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                //Step 2: Convert YUV format to jpg
-                yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
-                byte[] bytes = out.toByteArray();
-                */
-
-                imageProcessing= (Boolean) intent.getExtras().get("imageProcessing");
-
-                if (imageProcessing==false){
-                    Log.d("NEUTRAL", "Server Service: Package Sent to Main Activity");
-                    //Log.d("NEUTRAL","Length of audio: " + audioData.length);
-                    //Log.d("NEUTRAL","Length of picture: " + bytes.length);
-                    //streamData = buffer2;
-                    //pictureDataOut = bytes;
-                    pictureDataOut = buffer2;
-                    //audioDataOut = audioData;
-                    signalActivity();
-                }
-
-                socket.close();
-
+            }catch(IOException e) {
+                Log.d("NEUTRAL", "Sever Service IO Exception Error: " + e.getMessage());
             }
 
+            byte[] buffer2 = baos.toByteArray();
+            Log.d("NEUTRAL","Length of data received: " + buffer2.length);
 
-        }catch(IOException e){
-            Log.d("NEUTRAL", "Sever Service IO Exception Error: " + e.getMessage());
-        }catch(Exception e){
-            Log.d("NEUTRAL", "Server Service Errror: " + e.getMessage());
+            //byte[] audioData = Arrays.copyOfRange(buffer2, 0, minBufSize);
+            //byte[] bytes = Arrays.copyOfRange(buffer2, minBufSize, buffer2.length);
+
+            /*
+            YuvImage yuv = new YuvImage(buffer2, 17, 640, 480, null);
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            yuv.compressToJpeg(new Rect(0, 0, 640, 480), 100, out);
+            byte[] image_buffer = out.toByteArray();
+            */
+
+            imageProcessing= (Boolean) intent.getExtras().get("imageProcessing");
+
+            if (imageProcessing==false){
+                Log.d("NEUTRAL", "Server Service: Package Sent to Main Activity");
+                //Log.d("NEUTRAL","Length of audio: " + audioData.length);
+                //Log.d("NEUTRAL","Length of picture: " + bytes.length);
+                //streamData = buffer2;
+                //pictureDataOut = bytes;
+                //pictureDataOut = image_buffer;
+                pictureDataOut = buffer2;
+                //audioDataOut = audioData;
+                signalActivity();
+            }
         }
+
+        try{
+            socket.close();
+        }catch(IOException e) {
+            Log.d("NEUTRAL", "Sever Service IO Exception Error: " + e.getMessage());
+        }
+
+    }
+
+    public static int byteArrayToInt(byte[] b)
+    {
+        int value = 0;
+        for (int i = 0; i < 4; i++) {
+            int shift = (4 - 1 - i) * 8;
+            value += (b[i] & 0x000000FF) << shift;
+        }
+        return value;
     }
 
     public void signalActivity(){
@@ -134,29 +176,6 @@ public class ServerService extends IntentService {
     public void onDestroy(){
         serviceEnabled=false;
         stopSelf();
-    }
-
-    public static byte[][] divideArray(byte[] source, int chunksize) {
-
-
-        byte[][] ret = new byte[(int)Math.ceil(source.length / (double)chunksize)][chunksize];
-
-        int start = 0;
-
-        for(int i = 0; i < ret.length; i++) {
-            ret[i] = Arrays.copyOfRange(source,start, start + chunksize);
-            start += chunksize ;
-        }
-
-        return ret;
-    }
-
-    public static int byteArrayToInt(byte[] b)
-    {
-        return   b[3] & 0xFF |
-                (b[2] & 0xFF) << 8 |
-                (b[1] & 0xFF) << 16 |
-                (b[0] & 0xFF) << 24;
     }
 
 }
