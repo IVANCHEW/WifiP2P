@@ -97,31 +97,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     int count2 = 0;
     int nserver=0;
 
-    //Conversion of video data received
-    /*
-    int width = 320;
-    int height = 240;
-    int previewFormat = 17;
-    */
-    //int minBufSize = 2048;
-    //int minBufSize = 1408;
-    int minBufSize = 924;
-
-    //Audio Test
-    private AudioTrack speaker;
-    private int sampleRate = 8000;
-    private int channelConfig = AudioFormat.CHANNEL_CONFIGURATION_MONO;
-    private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-    int audioCount=  0;
-    Runnable AP;
-    Boolean audioRunning = false;
-    Handler handleAudio = new Handler(){
-        @Override
-        public void handleMessage(Message msg){
-            audioRunning=false;
-        }
-    };
-
     //Receiver
     DataManager dm;
     DataReceiver dr;
@@ -229,17 +204,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                         @Override
                         public void onSuccess() {
                             Log.d("NEUTRAL", "Connection successful");
-                            try{
-                                //startServer();
-                                Log.d("NEUTRAL","Server Started");
-                                speaker = new AudioTrack(AudioManager.STREAM_MUSIC,sampleRate,channelConfig,audioFormat,minBufSize, AudioTrack.MODE_STREAM);
-                                speaker.play();
-                                Log.d("NEUTRAL", "Speaker initialized");
-                                text1.setText("Server Started");
-                            }catch(Exception e){
-                                Log.d("NEUTRAL","Server and audio start error");
-                                Log.d("NEUTRAL",e.toString());
-                            }
                         }
 
                         @Override
@@ -299,10 +263,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
             }
         });
 
+        //================STOP AUDIO - NOT IN USE
         button7.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
-                speaker.release();
                 //Log.d("NEUTRAL","Speakers Released");
             }
         });
@@ -344,11 +308,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         text1.setText(message);
     }
 
-    public void setServerStatus(String message){
-        text1.setText("Server Status" + nserver + message);
-        nserver = nserver + 1;
-    }
-
     public void setNetworkToReadyState(boolean status, WifiP2pInfo info, WifiP2pDevice device){
         Log.d(TAG, "Network Set to Ready");
         serverStatus = true;
@@ -358,11 +317,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         dm.setConnectionStatus(true);
         startReceiver();
         //updateDisplayImage();
-    }
-
-    public void writeAudio(){
-        AP = new audioPublisher(speaker, minBufSize, receivePData);
-        new Thread(AP).start();
     }
 
     public void stopConnect(){
@@ -393,120 +347,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
 
     public void setNetworkToPendingState(boolean status){
         transferReadyState=status;
-    }
-
-    /*
-    public void startServer(){
-
-        if(!serverStatus){
-
-            serverServiceIntent = new Intent(this, ServerService.class);
-            serverServiceIntent.putExtra("port", new Integer(port));
-            serverServiceIntent.putExtra("audiobuf", new Integer(minBufSize));
-            serverServiceIntent.putExtra("imageProcessing", imageProcessing);
-            serverServiceIntent.putExtra("serverResult", new ResultReceiver(null){
-                @Override
-                protected void onReceiveResult(int resultCode, final Bundle resultData){
-
-                    if(resultCode==port){
-                    //Log.d("NEUTRAL","Received server results");
-
-                        if(resultData==null){
-                            serverStatus=false;
-                            Log.d("NEUTRAL", "Main Activity: Server Stopped");
-                        }else if(imageProcessing==false){
-
-                            imageProcessing = true;
-                            serverServiceIntent.putExtra("imageProcessing", imageProcessing);
-                            bmpout = null;
-                            receivePData = (byte[])resultData.get("pictureData");
-                            receiveAData = (byte[])resultData.get("audioData");
-                            //Log.d("NEUTRAL","Steaming, Received byte array of length: " + receivePData.length);
-
-                            //Reading audio data
-                            //startAudioWrite();
-
-                            //try{
-                            //    startAudioWrite();
-                            //}catch(Exception e){
-                            //    Log.d("NEUTRAL E","Audio Write Exception Thrown: " + e.toString());
-                            //}
-
-
-                            //Changed
-                            //startAudioWrite();
-                            imageview.post(new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    bmpout = BitmapFactory.decodeByteArray(receivePData,0,receivePData.length);
-                                    //bmpout2 = Bitmap.createBitmap(bmpout, 0, 0, bmpout.getWidth(), bmpout.getHeight(), matrix, false);
-                                    //bmpout3 = Bitmap.createBitmap(bmpout2, 0, 0, bmpout2.getWidth(), bmpout2.getHeight(), matrix2, false);
-
-                                    count2 = count2 + 1;
-                                    Log.d("NEUTRAL", "Frame Count = " + count2);
-                                    //Log.d("NEUTRAL", "Frame Width: " + bmpout3.getWidth() + " Frame Height: " + bmpout3.getHeight());
-
-                                    if (bmpout==null){
-                                        count = count + 1;
-                                        Log.d("NEUTRAL","image: Bitmap null : " + count);
-                                    }else{
-                                        //imageview.setImageBitmap(bmpout3);
-                                        imageview.setImageBitmap(bmpout);
-                                    }
-                                    imageProcessing = false;
-                                    serverServiceIntent.putExtra("imageProcessing", imageProcessing);
-                                }
-                            });
-
-                        }else if(imageProcessing){
-                            Log.d("NEUTRAL","Unable to display, image being processed");
-                        }
-                    }
-                }
-            });
-            serverStatus=true;
-            startService(serverServiceIntent);
-            Log.d("NEUTRAL","Main Activity: Server Running");
-        }else
-        {
-            Log.d("NEUTRAL","Server Already Running");
-        }
-    }
-    */
-
-    public void startAudioWrite(){
-        final Thread writeThread = new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-                Log.d("NEUTRAL","Main Activity: Started Audio Write Thread");
-                speaker.flush();
-                speaker.write(receiveAData,0,receiveAData.length);
-                /*
-                try {
-
-                    Log.d("NEUTRAL","Main Activity: Started Audio Write Thread");
-                    speaker.flush();
-                    speaker.write(receiveAData,0,receiveAData.length);
-
-                } catch (Exception e) {
-                    Log.d("NEUTRAL", "IOException: " + e.getMessage());
-                }
-                */
-
-            }
-
-        });
-
-        writeThread.start();
-        /*
-        try {
-            writeThread.start();
-        }catch(Exception e){
-            Log.d("NEUTRAL E", "Error caught within audio thread: " + e.toString());
-        }
-        */
     }
 
     public void startReceiver(){
