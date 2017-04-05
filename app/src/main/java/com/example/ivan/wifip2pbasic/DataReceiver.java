@@ -63,10 +63,10 @@ public class DataReceiver implements Runnable {
         }
 
         // READ CONFIGURATION DATA
-        ensureAvailable(4);
-        updateConfiguration();
-        audioBufSize = dm.getAudioBufSize();
-        Log.d(TAG,"Updated audio buffer size is: " + audioBufSize);
+        //ensureAvailable(4);
+        //updateConfiguration();
+        //audioBufSize = dm.getAudioBufSize();
+        //Log.d(TAG,"Updated audio buffer size is: " + audioBufSize);
 
         // BEGIN RECEIVER LOOP
         while(serviceEnabled){
@@ -87,8 +87,8 @@ public class DataReceiver implements Runnable {
             //waitForImageMemory();
 
             readImageData(picture_length);
-            ensureAvailable(audioBufSize);
-            readAudioData(audioBufSize);
+            //ensureAvailable(audioBufSize);
+            //readAudioData(audioBufSize);
 
         }
 
@@ -215,7 +215,7 @@ public class DataReceiver implements Runnable {
 
             if(audio_read){
                 Log.d(TAG,"Loading Audio");
-                dm.loadAudio(buffer3);
+                //dm.loadAudio(buffer3);
             }
         }
         else{
@@ -251,6 +251,6 @@ public class DataReceiver implements Runnable {
 
         audioBuffLength = byteArrayToInt(audioBuffData);
 
-        dm.updateAudioBufSize(audioBuffLength);
+        //dm.updateAudioBufSize(audioBuffLength);
     }
 }

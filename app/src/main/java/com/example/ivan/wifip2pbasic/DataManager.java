@@ -24,13 +24,13 @@ public class DataManager {
     boolean             audio_loaded = false;
     boolean             wifi_connected = false;
     private             MainActivity mActivity;
-    audioPublisher      ap;
-    Thread              ap_thread;
+    //audioPublisher      ap;
+    //Thread              ap_thread;
 
     public DataManager(MainActivity activity){
         Log.d(TAG, "Data Manager Called");
         this.mActivity = activity;
-        ap = new audioPublisher(this);
+        //ap = new audioPublisher(this);
     }
 
     public void loadImage(byte[] b){
@@ -46,6 +46,7 @@ public class DataManager {
         }
     }
 
+    /*
     public void loadAudio(byte[] b){
         if(!audio_loaded){
             audio_holder = b;
@@ -58,6 +59,7 @@ public class DataManager {
             Log.d(TAG,"Audio not loaded, holder full");
         }
     }
+    */
 
     public byte[] getImage(){
         if(image_loaded){
@@ -106,10 +108,12 @@ public class DataManager {
 
     public void setAudioBufSize(int i){ audioBufSize = i; }
 
+    /*
     public void updateAudioBufSize(int i){
         audioBufSize = i;
         ap.updateBuffSize(audioBufSize);
     }
+    */
     public int getAudioBufSize(){return audioBufSize; }
 
 }
