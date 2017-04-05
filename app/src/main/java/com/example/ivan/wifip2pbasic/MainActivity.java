@@ -48,6 +48,8 @@ import java.util.List;
 
 public class MainActivity extends Activity implements OnItemSelectedListener, WifiP2pManager.PeerListListener{
 
+    private static final String TAG = "NEUTRAL";
+
     WifiP2pManager mManager;
     WifiP2pManager.Channel mChannel;
     BroadcastReceiver mReceiver;
@@ -80,7 +82,7 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     public final int port = 7950;
 
     Boolean serverStatus=false;
-    private Intent serverServiceIntent;
+    //private Intent serverServiceIntent;
 
     Camera mainCamera;
     Preview mPreview;
@@ -95,30 +97,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
     int count2 = 0;
     int nserver=0;
 
-    //Conversion of video data received
-    /*
-    int width = 320;
-    int height = 240;
-    int previewFormat = 17;
-    */
-    //int minBufSize = 2048;
-    //int minBufSize = 1408;
-    int minBufSize = 2400;
-
-    //Audio Test
-    private AudioTrack speaker;
-    private int sampleRate = 8000;
-    private int channelConfig = AudioFormat.CHANNEL_CONFIGURATION_MONO;
-    private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-    int audioCount=  0;
-    Runnable AP;
-    Boolean audioRunning = false;
-    Handler handleAudio = new Handler(){
-        @Override
-        public void handleMessage(Message msg){
-            audioRunning=false;
-        }
-    };
+    //Receiver
+    DataManager dm;
+    DataReceiver dr;
+    Thread dr_thread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,10 +120,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         button1 = (Button)findViewById(R.id.button1);
         button2 = (Button)findViewById(R.id.button2);
         button3 = (Button)findViewById(R.id.button3);
-        button4 = (Button)findViewById(R.id.button4);
-        button5= (Button)findViewById(R.id.button5);
-        button6 = (Button)findViewById(R.id.button6);
-        button7 = (Button)findViewById(R.id.button7);
         text1 = (TextView)findViewById(R.id.textView1);
         frame1= (FrameLayout)findViewById(R.id.previewFrame);
         editText1 = (EditText)findViewById(R.id.editText);
@@ -152,9 +130,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         spinnerArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, peerNames);
         spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner1.setAdapter(spinnerArrayAdapter);
-        spinner1.setOnItemSelectedListener(this);
-        matrix.postRotate(180);
-        matrix2.preScale(-1, 1);
+
+        //Set Receiver Classes
+        dm = new DataManager(this);
+        dr = new DataReceiver(port, wifiP2pInfo, dm);
 
         //====================================INITIATE WIFI DIRECT====================================
         mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener(){
@@ -218,17 +197,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
                         @Override
                         public void onSuccess() {
                             Log.d("NEUTRAL", "Connection successful");
-                            try{
-                                startServer();
-                                Log.d("NEUTRAL","Server Started");
-                                speaker = new AudioTrack(AudioManager.STREAM_MUSIC,sampleRate,channelConfig,audioFormat,minBufSize, AudioTrack.MODE_STREAM);
-                                speaker.play();
-                                Log.d("NEUTRAL", "Speaker initialized");
-                                text1.setText("Server Started");
-                            }catch(Exception e){
-                                Log.d("NEUTRAL","Server and audio start error");
-                                Log.d("NEUTRAL",e.toString());
-                            }
                         }
 
                         @Override
@@ -251,68 +219,9 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
             @Override
             public void onClick(View v){
                 Log.d("NEUTRAL","Stop Connection intiated");
-                mManager.removeGroup(mChannel, new WifiP2pManager.ActionListener(){
-                    @Override
-                    public void onSuccess() {
-                        try{
-                            //Undeclare available peers
-                            peerNames.clear();
-                            validPeers=false;
-                            Log.d("NEUTRAL","Peers cleared");
-
-                            //Uninitialise Services
-                            serverStatus=false;
-                            speaker.release();
-                        }catch(Exception e){
-                            Log.d("NEUTRAL",e.toString());
-                        }
-                        Log.d("NEUTRAL","Stop Connection successful");
-                    }
-
-                    @Override
-                    public void onFailure(int reason) {
-                        Log.d("NEUTRAL","Stop Connection failed");
-                    }
-                });
-            }
-        });
-
-        //============START SERVER - NOT IN USE
-        button4.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-            }
-        });
-
-        //============START THE PREVIEW - NOT IN USE
-        button5.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-
-        });
-
-        //================START SERVER WITH AUDIO FEATURES - NOT IN USE
-        button6.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                text1.setText("Server Started");
-                startServer();
-                Log.d("NEUTRAL","Server Started");
-                speaker = new AudioTrack(AudioManager.STREAM_MUSIC,sampleRate,channelConfig,audioFormat,minBufSize, AudioTrack.MODE_STREAM);
-                speaker.play();
-                Log.d("NEUTRAL", "Speaker initialized");
-                //Log.d("NEUTRAL", "Audio class initialised");
-
-            }
-        });
-
-        button7.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                speaker.release();
-                Log.d("NEUTRAL","Speakers Released");
+                dm.setConnectionStatus(false);
+                dr.stopReceiver();
+                stopConnect();
             }
         });
 
@@ -353,114 +262,75 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         text1.setText(message);
     }
 
-    public void setServerStatus(String message){
-        text1.setText("Server Status" + nserver + message);
-        nserver = nserver + 1;
-    }
-
     public void setNetworkToReadyState(boolean status, WifiP2pInfo info, WifiP2pDevice device){
+        Log.d(TAG, "Network Set to Ready");
+        serverStatus = true;
         wifiP2pInfo=info;
         targetDevice=device;
         transferReadyState=status;
+        dm.setConnectionStatus(true);
+        startReceiver();
     }
 
-    public boolean writeAudio(){
-        AP = new audioPublisher(speaker, minBufSize, receivePData);
-        new Thread(AP).start();
+    public void stopConnect(){
+        mManager.removeGroup(mChannel, new WifiP2pManager.ActionListener(){
+            @Override
+            public void onSuccess() {
+                try{
+                    //Undeclare available peers
+                    peerNames.clear();
+                    validPeers=false;
+                    Log.d("NEUTRAL","Peers cleared");
 
-        return false;
+                    //Uninitialise Services
+                    serverStatus=false;
+                    //speaker.release();
+                }catch(Exception e){
+                    Log.d("NEUTRAL",e.toString());
+                }
+                //Log.d("NEUTRAL","Stop Connection successful");
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                Log.d("NEUTRAL","Stop Connection failed");
+            }
+        });
     }
 
     public void setNetworkToPendingState(boolean status){
         transferReadyState=status;
     }
 
-    public void startServer(){
-
-        if(!serverStatus){
-
-            serverServiceIntent = new Intent(this, ServerService.class);
-            serverServiceIntent.putExtra("port", new Integer(port));
-            serverServiceIntent.putExtra("audiobuf", new Integer(minBufSize));
-            serverServiceIntent.putExtra("imageProcessing", imageProcessing);
-            serverServiceIntent.putExtra("serverResult", new ResultReceiver(null){
-                @Override
-                protected void onReceiveResult(int resultCode, final Bundle resultData){
-
-                    if(resultCode==port){
-                    //Log.d("NEUTRAL","Received server results");
-
-                        if(resultData==null){
-                            serverStatus=false;
-                            Log.d("NEUTRAL", "Main Activity: Server Stopped");
-                        }else if(imageProcessing==false){
-
-                            imageProcessing = true;
-                            serverServiceIntent.putExtra("imageProcessing", imageProcessing);
-                            bmpout = null;
-                            receivePData = (byte[])resultData.get("pictureData");
-                            receiveAData = (byte[])resultData.get("audioData");
-                            //Log.d("NEUTRAL","Steaming, Received byte array of length: " + receivePData.length);
-
-                            //Reading audio data
-                            startAudioWrite();
-
-                            //Changed
-                            imageview.post(new Runnable() {
-                                @Override
-                                public void run() {
-
-                                    bmpout = BitmapFactory.decodeByteArray(receivePData,0,receivePData.length);
-                                    bmpout2 = Bitmap.createBitmap(bmpout, 0, 0, bmpout.getWidth(), bmpout.getHeight(), matrix, false);
-                                    bmpout3 = Bitmap.createBitmap(bmpout2, 0, 0, bmpout2.getWidth(), bmpout2.getHeight(), matrix2, false);
-
-                                    count2 = count2 + 1;
-                                    Log.d("NEUTRAL", "Frame Count = " + count2);
-                                    Log.d("NEUTRAL", "Frame Width: " + bmpout3.getWidth() + " Frame Height: " + bmpout3.getHeight());
-
-                                    if (bmpout==null){
-                                        count = count + 1;
-                                        Log.d("NEUTRAL","image: Bitmap null : " + count);
-                                    }else{
-                                        imageview.setImageBitmap(bmpout3);
-                                    }
-                                    imageProcessing = false;
-                                    serverServiceIntent.putExtra("imageProcessing", imageProcessing);
-                                }
-                            });
-
-                        }
-                    }
-                }
-            });
-            serverStatus=true;
-            startService(serverServiceIntent);
-            Log.d("NEUTRAL","Main Activity: Server Running");
-        }else
-        {
-            Log.d("NEUTRAL","Server Already Running");
-        }
+    public void startReceiver(){
+        Log.d(TAG,"Start Receiver Function Called");
+        dr.updateInitialisationData(wifiP2pInfo);
+        dr_thread = new Thread(dr);
+        dr_thread.start();
     }
 
-    public void startAudioWrite(){
-        final Thread writeThread = new Thread(new Runnable() {
-
+    public void updateDisplayImage(){
+        imageview.post(new Runnable() {
             @Override
             public void run() {
-                try {
-
-                    Log.d("NEUTRAL","Main Activity: Started Audio Write Thread");
-                    speaker.flush();
-                    speaker.write(receiveAData,0,receiveAData.length);
-
-                } catch (Exception e) {
-                    Log.d("NEUTRAL", "IOException: " + e.getMessage());
+                if(dm.getImageLoadStatus()) {
+                    Log.d(TAG,"Retrieving image from data manager");
+                    receivePData = dm.getImage();
+                    Log.d(TAG,"Decoding the data");
+                    bmpout = BitmapFactory.decodeByteArray(receivePData, 0, receivePData.length);
+                    Log.d(TAG,"Data Decoded, Displaying image");
+                    count2 = count2 + 1;
+                    Log.d("NEUTRAL", "Frame Count = " + count2);
+                    if (bmpout == null) {
+                        count = count + 1;
+                        Log.d("NEUTRAL", "image: Bitmap null : " + count);
+                    } else {
+                        imageview.setImageBitmap(bmpout);
+                    }
+                    dm.unloadImage();
                 }
-
             }
-
         });
-        writeThread.start();
     }
 
 }
