@@ -17,10 +17,10 @@ public class DataReceiver implements Runnable {
     private static final String TAG = "NEUTRAL";
 
     DataManager dm;
-    private MainActivity mActivity;
 
     //Server Component
     private int port;
+    private int audioBufSize;
     WifiP2pInfo wifiP2pInfo;
     ServerSocket serverSocket = null;
     Socket socket = null;
@@ -29,9 +29,8 @@ public class DataReceiver implements Runnable {
     //Receiver Components
     Boolean serviceEnabled = false;
 
-    public DataReceiver(MainActivity activity, int p, WifiP2pInfo info, DataManager d){
+    public DataReceiver(int p, WifiP2pInfo info, DataManager d){
         Log.d(TAG,"Data Receiver Class Called");
-        this.mActivity = activity;
         this.port = p;
         this.wifiP2pInfo = info;
         this.dm = d;
@@ -63,9 +62,13 @@ public class DataReceiver implements Runnable {
             Log.d("NEUTRAL", "Sever Service IO Exception Error: " + e.getMessage());
         }
 
-        // BEGIN RECEIVER LOOP
-        int audioBufSize = dm.getAudioBufSize();
+        // READ CONFIGURATION DATA
+        ensureAvailable(4);
+        updateConfiguration();
+        audioBufSize = dm.getAudioBufSize();
+        Log.d(TAG,"Updated audio buffer size is: " + audioBufSize);
 
+        // BEGIN RECEIVER LOOP
         while(serviceEnabled){
 
             //Log.d("NEUTRAL", "Server Service: Package Received");
@@ -234,5 +237,20 @@ public class DataReceiver implements Runnable {
                 Log.d(TAG,"Error sleeping thread: " + e.toString());
             }
         }
+    }
+
+    private void updateConfiguration(){
+        int audioBuffLength = 0;
+        byte[] audioBuffData = new byte[4];
+
+        try{
+            is.read(audioBuffData, 0 ,4);
+        }catch(IOException e) {
+            Log.d("NEUTRAL", "Sever Service IO Exception Error: " + e.getMessage());
+        }
+
+        audioBuffLength = byteArrayToInt(audioBuffData);
+
+        dm.updateAudioBufSize(audioBuffLength);
     }
 }

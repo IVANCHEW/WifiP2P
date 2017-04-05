@@ -17,7 +17,7 @@ public class DataManager {
     //SYSTEM DATA
     byte[]              image_holder;
     byte[]              audio_holder;
-    int                 audioBufSize;
+    int                 audioBufSize = 0;
 
     //SYSTEM MANAGEMENT
     boolean             image_loaded = false;
@@ -106,6 +106,10 @@ public class DataManager {
 
     public void setAudioBufSize(int i){ audioBufSize = i; }
 
+    public void updateAudioBufSize(int i){
+        audioBufSize = i;
+        ap.updateBuffSize(audioBufSize);
+    }
     public int getAudioBufSize(){return audioBufSize; }
 
 }

@@ -16,7 +16,7 @@ public class audioPublisher implements Runnable {
     DataManager dm;
 
     AudioTrack speaker;
-    int audioBuffSize = 2048;
+    int audioBuffSize = 1408*2;
     private int sampleRate = 8000;
     private int channelConfig = AudioFormat.CHANNEL_CONFIGURATION_MONO;
     private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
@@ -43,6 +43,13 @@ public class audioPublisher implements Runnable {
         Log.d(TAG, "Audio Class: Finished Running");
         dm.unloadAudio();
         Log.d(TAG,"Audio unloaded from Data Manager");
+    }
+
+    public void updateBuffSize(int i){
+        audioBuffSize = i;
+        speaker.stop();
+        speaker = new AudioTrack(AudioManager.STREAM_MUSIC,sampleRate,channelConfig,audioFormat,audioBuffSize, AudioTrack.MODE_STREAM);
+        speaker.play();
     }
 
 }

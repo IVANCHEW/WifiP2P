@@ -120,10 +120,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         button1 = (Button)findViewById(R.id.button1);
         button2 = (Button)findViewById(R.id.button2);
         button3 = (Button)findViewById(R.id.button3);
-        button4 = (Button)findViewById(R.id.button4);
-        button5= (Button)findViewById(R.id.button5);
-        button6 = (Button)findViewById(R.id.button6);
-        button7 = (Button)findViewById(R.id.button7);
         text1 = (TextView)findViewById(R.id.textView1);
         frame1= (FrameLayout)findViewById(R.id.previewFrame);
         editText1 = (EditText)findViewById(R.id.editText);
@@ -134,13 +130,10 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         spinnerArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, peerNames);
         spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner1.setAdapter(spinnerArrayAdapter);
-        spinner1.setOnItemSelectedListener(this);
-        //matrix.postRotate(0);
-        //matrix2.preScale(-1, 1);
 
         //Set Receiver Classes
         dm = new DataManager(this);
-        dr = new DataReceiver(this, port, wifiP2pInfo, dm);
+        dr = new DataReceiver(port, wifiP2pInfo, dm);
 
         //====================================INITIATE WIFI DIRECT====================================
         mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener(){
@@ -232,45 +225,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
             }
         });
 
-        //============START SERVER - NOT IN USE
-        button4.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-            }
-        });
-
-        //============START THE PREVIEW - NOT IN USE
-        button5.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-
-        });
-
-        //================START SERVER WITH AUDIO FEATURES - NOT IN USE
-        button6.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                text1.setText("Server Started");
-                //startServer();
-                Log.d("NEUTRAL","Server Started");
-                //speaker = new AudioTrack(AudioManager.STREAM_MUSIC,sampleRate,channelConfig,audioFormat,minBufSize, AudioTrack.MODE_STREAM);
-                //speaker.play();
-                Log.d("NEUTRAL", "Speaker initialized");
-                //Log.d("NEUTRAL", "Audio class initialised");
-
-            }
-        });
-
-        //================STOP AUDIO - NOT IN USE
-        button7.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                //Log.d("NEUTRAL","Speakers Released");
-            }
-        });
-
     }
 
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -316,7 +270,6 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         transferReadyState=status;
         dm.setConnectionStatus(true);
         startReceiver();
-        //updateDisplayImage();
     }
 
     public void stopConnect(){
@@ -380,11 +333,4 @@ public class MainActivity extends Activity implements OnItemSelectedListener, Wi
         });
     }
 
-    public Boolean getProcessingStatus(){
-        if (imageProcessing){
-            return true;
-        }else{
-            return false;
-        }
-    }
 }
